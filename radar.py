@@ -579,7 +579,7 @@ def refresh():
             status["progress"] = "Kendi repoların"
             try:
                 login, rows = fetch_mine(token)
-                old = {r["repo"]: r["stars"] for r in prev.get("mine", {}).get("rows", [])}
+                old = {r["repo"]: r["stars"] for r in (prev.get("mine") or {}).get("rows", [])}
                 for r in rows:
                     r["delta_prev"] = r["stars"] - old[r["repo"]] if r["repo"] in old else None
                 mine = {"id": "benim", "name": "Benim repolarım", "login": login, "rows": rows}
@@ -654,6 +654,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             self._get()
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            pass  # pencere yenilenince/kapanınca tarayıcı bağlantıyı keser; zararsız
         except Exception:
             import traceback
             log("Sayfa hatası " + self.path + ": " + traceback.format_exc())
