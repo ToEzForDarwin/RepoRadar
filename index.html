@@ -71,6 +71,10 @@ main{padding:10px 12px 20px}
 .nitem{border-left:3px solid var(--accent);padding:4px 8px;background:var(--chip);border-radius:0 8px 8px 0;font-size:12px;white-space:pre-wrap;word-break:break-word}
 .nitem small{display:block;color:var(--muted);font-size:10px}
 .nadd{display:flex;gap:6px}.nadd textarea{flex:1;min-width:0;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:5px;font:inherit;font-size:12px;min-height:32px;resize:vertical}
+.errs{margin-top:6px;border:1px solid #d9822b;background:rgba(217,130,43,.12);border-radius:8px;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:4px}
+.errs[hidden]{display:none}
+.errs .erow{display:flex;gap:8px;align-items:center}.errs .erow b{flex:1}
+.errs .eitem{color:var(--muted);font-size:11px;word-break:break-word}
 .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
 .cat-h{grid-column:1/-1;margin:6px 0 0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 </style></head>
@@ -79,6 +83,7 @@ main{padding:10px 12px 20px}
  <div class="hrow"><h1>📡 Repo Radar</h1><button class="icon" id="ref" title="Şimdi yenile">⟳</button></div>
  <div class="status" id="status"></div>
  <div id="upd" hidden style="margin-top:6px"><button class="btn" id="updbtn">Güncelleme var</button></div>
+ <div id="errs" class="errs" hidden></div>
  <div class="kpis">
   <div class="kpi" id="k-new"><span>Yeni giren</span><b>—</b><small>son güncellemede</small></div>
   <div class="kpi" id="k-fast"><span>En hızlı yükselen</span><b>—</b><small></small></div>
@@ -157,8 +162,9 @@ function render(){
   }
   const g=$('#grid');g.replaceChildren();
   if(v.projects){
-    if(!v.rows.length){g.append(el('div','empty','projects.json boş.'));return;}
+    if(!v.rows.length)g.append(el('div','empty','Henüz proje yok.'));
     v.rows.forEach((pr,i)=>g.append(projCard(pr,i)));
+    g.append(addProject());
     g.append(el('div','status',LIVE?'GitHub durumu: '+new Date(LIVE.at).toLocaleTimeString('tr-TR')+' (2 dakikada bir yenilenir)':'GitHub durumu yükleniyor...'));
     if(!LIVE)loadLive();
     return;
@@ -176,6 +182,7 @@ const ST={'calisiyor':['ok','Çalışıyor'],'seni-bekliyor':['warn','Seni bekli
 const safe=u=>/^https:\/\//.test(u||'');
 async function loadLive(force){
   try{LIVE=await (await fetch('/api/projects'+(force?'?force':''))).json();}catch(e){return;}
+  showErrors(LIVE.errors);
   if(cur==='proj'&&editing<0&&!typing())render();
 }
 setInterval(()=>{if(cur==='proj'){loadLive(true);Object.keys(NOTES).forEach(r=>loadNotes(r));}},120000);
@@ -198,7 +205,7 @@ async function loadNotes(repo,force){
   try{NOTES[repo]=await (await fetch('/api/notes?repo='+encodeURIComponent(repo)+(force?'&force=1':''))).json();}catch(e){NOTES[repo]={error:'Notlar alınamadı'};}
   if(cur==='proj'&&editing<0&&!typing())render();
 }
-const typing=()=>{const a=document.activeElement;return a&&a.closest&&a.closest('.notes')&&a.value;};
+const typing=()=>{if(adding)return true;const a=document.activeElement;return a&&a.closest&&a.closest('.notes')&&a.value;};
 function notesBox(repo){
   const b=el('div','notes');const d=NOTES[repo];
   const h=el('div','lrow');h.append(el('span','plbl','📝 Notlar'+(d&&d.count?' ('+d.count+')':'')));
@@ -231,8 +238,12 @@ function projCard(pr,idx){
     const sv=el('button',null,'Kaydet');sv.className='btn';const cn=el('button','linkbtn','vazgeç');
     sv.onclick=async()=>{await fetch('/api/project-edit',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({index:idx,status:st.value,progress:pg.value,next:nx.value})});editing=-1;load();};
     cn.onclick=()=>{editing=-1;render();};
+    const rm=el('button','linkbtn','projeyi kaldır');rm.style.marginLeft='auto';
+    rm.onclick=async()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='emin misin? tekrar bas (notlar GitHub\'da kalır)';rm.style.color='#d9534f';return;}
+      const r=await (await fetch('/api/project-remove',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({index:idx,name:pr.name})})).json();
+      if(!r.ok){rm.textContent=r.error||'Olmadı';return;}editing=-1;load();};
     const r1=el('div','erow');r1.append(el('span','plbl','Durum'),st,el('span','plbl','İlerleme %'),pg);
-    f.append(r1,el('span','plbl','Sıradaki adım'),nx,(()=>{const r=el('div','erow');r.append(sv,cn);return r;})());c.append(f);
+    f.append(r1,el('span','plbl','Sıradaki adım'),nx,(()=>{const r=el('div','erow');r.append(sv,cn,rm);return r;})());c.append(f);
   } else {
     if(pr.next){c.append(el('span','plbl','Sıradaki adım'),el('div',null,pr.next));}
     const e=el('button','linkbtn','düzenle');e.onclick=()=>{editing=idx;render();};c.append(e);
@@ -245,6 +256,23 @@ function projCard(pr,idx){
   }
   if((pr.links||[]).length){const l=el('div','links');pr.links.forEach(k=>{if(!safe(k.url))return;const a=el('a',null,k.title);a.href=k.url;a.target='_blank';a.rel='noopener';l.append(a);});c.append(el('span','plbl','Bağlantılar'),l);}
   return c;
+}
+let adding=false;
+function addProject(){
+  if(!adding){const b=el('button','linkbtn','+ Proje ekle');b.style.gridColumn='1/-1';b.onclick=()=>{adding=true;render();};return b;}
+  const c=el('div','proj');c.append(el('h3',null,'Yeni proje'));
+  const f=el('div','edit');
+  const nm=el('input');nm.placeholder='Proje adı';
+  const rp=el('input');rp.placeholder='GitHub repo: sahip/repo veya bağlantısı (boş bırakılabilir)';
+  const sm=el('textarea');sm.placeholder='Kısa özet (isteğe bağlı)';
+  const msg=el('span','lk');
+  const sv=el('button','btn','Ekle');const cn=el('button','linkbtn','vazgeç');
+  sv.onclick=async()=>{sv.disabled=true;msg.textContent='Kontrol ediliyor...';msg.className='lk';
+    let r;try{r=await (await fetch('/api/project-add',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({name:nm.value,repo:rp.value,summary:sm.value})})).json();}catch(e){r={ok:false,error:'Uygulamaya ulaşılamadı'};}
+    sv.disabled=false;if(r.ok){adding=false;LIVE=null;load();}else{msg.textContent=r.error||'Olmadı';msg.className='lk err';}};
+  cn.onclick=()=>{adding=false;render();};
+  const r=el('div','erow');r.append(sv,cn);
+  f.append(nm,rp,sm,r,msg);c.append(f);setTimeout(()=>nm.focus(),0);return c;
 }
 function connectPanel(){
   const c=el('div','connect');
@@ -267,13 +295,26 @@ function showStatus(st){
   $('#ref').disabled=!!(st&&st.running);
 }
 async function load(){
-  DATA=await (await fetch('/api/data')).json();nav();render();showStatus(DATA.status);
+  DATA=await (await fetch('/api/data')).json();nav();if(!(cur==='proj'&&(adding||editing>=0)))render();showStatus(DATA.status);showErrors(DATA.errors);
   const u=$('#upd');u.hidden=!DATA.update;if(DATA.update)$('#updbtn').textContent='⬆ Güncelleme var: v'+DATA.version+' → v'+DATA.update;
 }
+let ERRS=[],errOpen=false;
+function showErrors(list){
+  ERRS=list||[];const b=$('#errs');b.hidden=!ERRS.length;if(!ERRS.length)return;
+  b.replaceChildren();const r=el('div','erow');
+  const last=ERRS[ERRS.length-1];
+  r.append(el('b',null,'⚠ '+ERRS.length+' sorun · son: '+new Date(last.at).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})));
+  const t=el('button','linkbtn',errOpen?'gizle':'göster');t.onclick=()=>{errOpen=!errOpen;showErrors(ERRS);};
+  const c=el('button','linkbtn','temizle');c.onclick=async()=>{await fetch('/api/errors-clear',{method:'POST',headers:{'X-Radar':'1'}});errOpen=false;showErrors([]);};
+  r.append(t,c);b.append(r);
+  if(errOpen)ERRS.slice().reverse().forEach(e=>b.append(el('div','eitem',new Date(e.at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+(e.n>1?' (×'+e.n+')':'')+' · '+e.msg)));
+  else b.append(el('div','eitem',last.msg));
+}
+setInterval(async()=>{try{showErrors((await (await fetch('/api/status')).json()).errors);}catch(e){}},60000);
 let poll=null;
 async function watch(){
   clearInterval(poll);
-  poll=setInterval(async()=>{const st=await (await fetch('/api/status')).json();showStatus(st);if(!st.running){clearInterval(poll);load();}},3000);
+  poll=setInterval(async()=>{const st=await (await fetch('/api/status')).json();showStatus(st);showErrors(st.errors);if(!st.running){clearInterval(poll);load();}},3000);
 }
 $('#ref').onclick=async()=>{await fetch('/api/refresh',{method:'POST',headers:{'X-Radar':'1'}});showStatus({running:true});watch();};
 $('#updbtn').onclick=async()=>{$('#updbtn').disabled=true;$('#updbtn').textContent='Güncelleniyor, birkaç saniye...';await fetch('/api/update',{method:'POST',headers:{'X-Radar':'1'}});setTimeout(()=>location.reload(),6000);};
