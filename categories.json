@@ -1,0 +1,91 @@
+{
+ "refresh_hours": 6,
+ "top_n": 20,
+ "port": 8765,
+ "github_token": "",
+ "notify": true,
+ "categories": [
+  {
+   "id": "genel",
+   "name": "Tüm zamanların en iyileri",
+   "queries": [
+    "stars:>60000 archived:false"
+   ],
+   "active_only": false
+  },
+  {
+   "id": "yeni",
+   "name": "Yeni yükselenler (30 gün)",
+   "queries": [
+    "created:>{d30} stars:>300"
+   ],
+   "active_only": false
+  },
+  {
+   "id": "3d",
+   "name": "3D üretim",
+   "queries": [
+    "topic:image-to-3d",
+    "topic:text-to-3d",
+    "topic:3d-generation",
+    "\"image to 3d\" in:description"
+   ]
+  },
+  {
+   "id": "ai",
+   "name": "Yapay zeka",
+   "queries": [
+    "topic:llm",
+    "topic:ai-agents",
+    "topic:generative-ai"
+   ]
+  },
+  {
+   "id": "mobil",
+   "name": "Mobil uygulama",
+   "queries": [
+    "topic:react-native",
+    "topic:flutter",
+    "topic:mobile-app"
+   ]
+  },
+  {
+   "id": "oyun",
+   "name": "Oyun / Unity",
+   "queries": [
+    "topic:unity",
+    "topic:unity3d",
+    "topic:game-development"
+   ]
+  },
+  {
+   "id": "satis",
+   "name": "Satış / CRM",
+   "queries": [
+    "topic:crm",
+    "topic:sales"
+   ]
+  },
+  {
+   "id": "pazarlama",
+   "name": "Pazarlama",
+   "queries": [
+    "topic:marketing",
+    "topic:marketing-automation",
+    "topic:seo"
+   ]
+  },
+  {
+   "id": "reklam",
+   "name": "Reklam (Ads)",
+   "queries": [
+    "topic:advertising -topic:adblock -topic:adblocker",
+    "topic:google-ads",
+    "topic:facebook-ads",
+    "topic:meta-ads"
+   ]
+  }
+ ],
+ "widget_width": 440,
+ "update_repo": "ToEzForDarwin/RepoRadar"
+}

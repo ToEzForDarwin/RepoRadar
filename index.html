@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%232f6fde'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='white' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='13' fill='none' stroke='white' stroke-width='3'/%3E%3Cline x1='32' y1='32' x2='52' y2='16' stroke='white' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='4' fill='white'/%3E%3C/svg%3E">
+<title>Repo Radar</title>
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--fg:#1d1c1a;--muted:#6b6862;--line:#e3e0da;--accent:#2f6fde;--ok:#1f8a4c;--warn:#b7791f;--bad:#c2412d;--chip:#f0eee9}
+@media (prefers-color-scheme:dark){:root{--bg:#171716;--panel:#222120;--fg:#ecebe8;--muted:#a19e98;--line:#363431;--accent:#6c9cf0;--ok:#4cc27d;--warn:#e0a84a;--bad:#ec7a66;--chip:#2c2b29}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 "Segoe UI",system-ui,sans-serif}
+header{position:sticky;top:0;z-index:2;background:var(--bg);padding:10px 12px 6px;border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:8px}
+.hrow h1{font-size:16px;margin:0 auto 0 0}
+.icon{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px}
+.icon:disabled{opacity:.5}
+.status{color:var(--muted);font-size:11px;margin-top:2px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 8px;min-width:0;cursor:pointer}
+.kpi span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.kpi b{display:block;font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+nav button{flex:none;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:4px 10px;border-radius:999px;cursor:pointer;font:inherit;font-size:12px}
+nav button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+nav .n{opacity:.7;margin-left:4px}
+.tools{display:flex;gap:6px;margin-top:6px}
+.tools input{flex:1;min-width:0}
+input,select{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit;font-size:12px}
+main{padding:10px 12px 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:5px;min-width:0;cursor:pointer}
+.top{display:flex;justify-content:space-between;gap:8px}
+.name{font-weight:600;word-break:break-word;min-width:0}.name a{color:var(--fg);text-decoration:none}.name a:hover{color:var(--accent);text-decoration:underline}
+.owner{display:block;color:var(--muted);font-size:11px;font-weight:400}
+.stars{text-align:right;white-space:nowrap;font-size:15px;font-variant-numeric:tabular-nums}
+.delta{display:block;font-size:11px;color:var(--ok)}.delta.zero{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11px;background:var(--chip);border-radius:999px;padding:0 7px}
+.chip.ok{color:var(--ok)}.chip.warn{color:var(--warn)}.chip.bad{color:var(--bad)}
+.chip.new{background:var(--accent);color:#fff}
+.card:not(.open) .chip.more{display:none}
+.desc{color:var(--muted);font-size:12px}
+.card:not(.open) .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note{border-left:3px solid var(--accent);padding:5px 8px;background:var(--chip);border-radius:0 8px 8px 0;font-size:12px}
+.card:not(.open) .note span{display:none}
+.note b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--accent)}
+.rank{color:var(--muted);font-size:11px;margin-right:4px;font-weight:400}
+.empty{color:var(--muted);padding:30px 10px;text-align:center}
+.connect{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;grid-column:1/-1;display:flex;flex-direction:column;gap:8px;font-size:12px}
+.connect ol{margin:0;padding-left:18px}.connect a{color:var(--accent)}
+.connect .row{display:flex;gap:6px}.connect input{flex:1;min-width:0}
+.connect button,.linkbtn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit}
+.linkbtn{background:none;color:var(--muted);padding:0;text-decoration:underline;font-size:11px}
+.err{color:var(--bad)}
+.proj{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;grid-column:1/-1;display:flex;flex-direction:column;gap:8px}
+.proj h3{margin:0;font-size:15px;display:flex;justify-content:space-between;gap:8px}
+.pbar{height:6px;background:var(--chip);border-radius:3px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--accent)}
+.plbl{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.tlist{display:flex;flex-direction:column;gap:4px}
+.tlist a{display:flex;justify-content:space-between;gap:8px;color:var(--fg);text-decoration:none;font-size:12px;padding:5px 8px;border-radius:8px;background:var(--chip)}
+.tlist a:hover{color:var(--accent)}
+.links{display:flex;flex-wrap:wrap;gap:6px}.links a{font-size:12px;color:var(--accent)}
+.live{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px}
+.lrow{display:flex;justify-content:space-between;gap:8px;font-size:12px;align-items:baseline}
+.lrow a{color:var(--fg);text-decoration:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lrow a:hover{color:var(--accent)}
+.lk{color:var(--muted);flex:none}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mini div{background:var(--chip);border-radius:8px;padding:4px 6px;text-align:center;font-size:11px;color:var(--muted)}.mini b{display:block;font-size:15px;color:var(--fg)}
+.edit{display:flex;flex-direction:column;gap:6px}.edit textarea{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:12px;min-height:50px}
+.erow{display:flex;gap:6px;align-items:center}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
+.cat-h{grid-column:1/-1;margin:6px 0 0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+</style></head>
+<body>
+<header>
+ <div class="hrow"><h1>📡 Repo Radar</h1><button class="icon" id="ref" title="Şimdi yenile">⟳</button></div>
+ <div class="status" id="status"></div>
+ <div id="upd" hidden style="margin-top:6px"><button class="btn" id="updbtn">Güncelleme var</button></div>
+ <div class="kpis">
+  <div class="kpi" id="k-new"><span>Yeni giren</span><b>—</b><small>son güncellemede</small></div>
+  <div class="kpi" id="k-fast"><span>En hızlı yükselen</span><b>—</b><small></small></div>
+  <div class="kpi" id="k-best"><span>En çok yıldız</span><b>—</b><small></small></div>
+ </div>
+ <nav id="nav"></nav>
+ <div class="tools"><input id="q" type="search" placeholder="Ara">
+  <select id="sort"><option value="stars">★ Yıldız</option><option value="delta">↗ 7 gün</option><option value="pushed">⏱ Güncel</option></select></div>
+</header>
+<main><div class="grid" id="grid"></div></main>
+<script>
+let DATA=null, cur='proj', LIVE=null, editing=-1;
+const $=s=>document.querySelector(s);
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
+const fmt=n=>n.toLocaleString('tr-TR');
+const ago=iso=>{if(!iso)return'';const d=Math.floor((Date.now()-new Date(iso))/864e5);return d<1?'bugün':d<31?d+' gün önce':d<365?Math.floor(d/30)+' ay önce':Math.floor(d/365)+' yıl önce';};
+function views(){
+  const cats=DATA.categories||[];
+  const best={id:'best',name:'⭐ En iyiler',rows:[],grouped:true};
+  cats.filter(c=>!['genel','yeni'].includes(c.id)).forEach(c=>c.rows.slice(0,3).forEach(r=>best.rows.push({...r,_cat:c.name})));
+  const news={id:'news',name:'🆕 Yeni girenler',rows:[]};
+  cats.forEach(c=>c.rows.filter(r=>r.new).forEach(r=>news.rows.push({...r,_cat:c.name})));
+  const m=DATA.mine?{...DATA.mine,name:'👤 Benim repolarım',mine:true}:{id:'benim',name:'👤 Benim repolarım',rows:[],mine:true};
+  const pj={id:'proj',name:'📁 Projelerim',rows:(DATA.projects&&DATA.projects.projects)||[],projects:true};
+  return [pj,best,m,news,null,...cats];
+}
+function nav(){
+  const n=$('#nav');n.replaceChildren();
+  views().forEach(v=>{
+    if(!v)return;
+    const b=el('button',v.id===cur?'on':'');b.append(el('span',null,v.name),el('span','n',String(v.rows.length)));
+    b.onclick=()=>{cur=v.id;nav();render();b.scrollIntoView({inline:'nearest',block:'nearest'});};n.append(b);
+  });
+  kpis();
+}
+function kpis(){
+  const all=new Map();(DATA.categories||[]).filter(c=>!['genel','yeni'].includes(c.id)).forEach(c=>c.rows.forEach(r=>{if(!all.has(r.repo))all.set(r.repo,{...r,_cat:c.name});}));
+  const rows=[...all.values()];
+  const set=(id,b,s)=>{const k=$('#'+id);k.querySelector('b').textContent=b;if(s!=null)k.querySelector('small').textContent=s;};
+  set('k-new',String(views().find(v=>v&&v.id==='news').rows.length));
+  const fast=rows.filter(r=>r.delta7!=null).sort((a,b)=>b.delta7-a.delta7)[0];
+  set('k-fast',fast?'+'+fmt(fast.delta7):'—',fast?fast.repo.split('/')[1]:'7 günlük veri birikiyor');
+  const best=rows.slice().sort((a,b)=>b.stars-a.stars)[0];
+  set('k-best',best?fmt(best.stars):'—',best?best.repo.split('/')[1]+' · '+best._cat:'');
+  $('#k-new').onclick=()=>{cur='news';nav();render();};
+  $('#k-fast').onclick=()=>{$('#sort').value='delta';cur=fast?(DATA.categories.find(c=>c.rows.some(r=>r.repo===fast.repo))||{}).id||cur:cur;nav();render();};
+  $('#k-best').onclick=()=>{$('#sort').value='stars';cur='best';nav();render();};
+}
+function card(r,i){
+  const c=el('article','card');
+  const top=el('div','top'),nm=el('div','name');const [own,rep]=r.repo.split('/');
+  const a=el('a',null,rep);if(/^https:\/\//.test(r.url)){a.href=r.url;a.target='_blank';a.rel='noopener';}
+  nm.append(el('span','rank','#'+(i+1)),a,el('span','owner',own+(r.lang?' · '+r.lang:'')+(r._cat?' · '+r._cat:'')));
+  const st=el('div','stars','★ '+fmt(r.stars));
+  st.append(r.private!=null?el('span','delta'+((r.delta_prev||0)>0?'':' zero'),(r.delta_prev||0)>0?'+'+r.delta_prev+' son güncellemeden beri':''):r.delta7==null?el('span','delta zero','7 günlük veri birikiyor'):el('span','delta'+(r.delta7>0?'':' zero'),(r.delta7>=0?'+':'')+fmt(r.delta7)+' son '+(r.delta_since?Math.max(1,Math.round((Date.now()-new Date(r.delta_since))/864e5)):7)+' gün'));
+  top.append(nm,st);c.append(top);
+  const ch=el('div','chips');
+  if(r.new)ch.append(el('span','chip new','YENİ'));
+  if(r.private!=null){ch.append(el('span','chip'+(r.private?' warn':''),r.private?'🔒 Gizli':'Açık'));if(r.fork)ch.append(el('span','chip','Fork'));if(r.issues)ch.append(el('span','chip','Açık konu: '+r.issues));}
+  if(r.private==null)(r.hints||[]).forEach(([k,t],j)=>ch.append(el('span','chip '+k+(j>1?' more':''),t)));
+  ch.append(el('span','chip','⏱ '+ago(r.pushed)));
+  c.append(ch);
+  if(r.desc)c.append(el('div','desc',r.desc));
+  const n=(DATA.notes||{})[r.repo.toLowerCase()];
+  if(n){const d=el('div','note');d.append(el('b',null,'Claude notu · RTX 3050 6GB: '+n.fit+(n.vram?' · '+n.vram+' GB VRAM':'')+' · kalite '+n.quality+'/5'),el('span',null,n.text));c.append(d);}
+  c.onclick=e=>{if(e.target.closest('a'))return;c.classList.toggle('open');};
+  return c;
+}
+function render(){
+  const v=views().find(x=>x&&x.id===cur)||views()[0];
+    const q=$('#q').value.trim().toLowerCase(), s=$('#sort').value;
+  let rows=v.rows.filter(r=>!q||(r.repo+' '+r.desc+' '+(r.topics||[]).join(' ')).toLowerCase().includes(q));
+  if(!v.grouped||s!=='stars'){
+    const cmp={stars:(a,b)=>b.stars-a.stars,delta:(a,b)=>(b.delta7??-1)-(a.delta7??-1),pushed:(a,b)=>String(b.pushed).localeCompare(String(a.pushed))}[s];
+    rows=rows.slice().sort(cmp);
+  }
+  const g=$('#grid');g.replaceChildren();
+  if(v.projects){
+    if(!v.rows.length){g.append(el('div','empty','projects.json boş.'));return;}
+    v.rows.forEach((pr,i)=>g.append(projCard(pr,i)));
+    g.append(el('div','status',LIVE?'GitHub durumu: '+new Date(LIVE.at).toLocaleTimeString('tr-TR')+' (2 dakikada bir yenilenir)':'GitHub durumu yükleniyor...'));
+    if(!LIVE)loadLive();
+    return;
+  }
+  if(v.mine){
+    if(!DATA.has_token){g.append(connectPanel());return;}
+    if(v.login){const h=el('div','cat-h','@'+v.login+' · '+v.rows.length+' repo ');const lo=el('button','linkbtn','bağlantıyı kaldır');lo.onclick=()=>saveToken('');h.append(lo);g.append(h);}
+    if(v.mine&&s==='stars'&&!q)rows=v.rows.slice().sort((a,b)=>String(b.pushed).localeCompare(String(a.pushed)));
+  }
+  if(!rows.length){g.append(el('div','empty',cur==='news'?'Son güncellemede listeye yeni giren repo yok.':(DATA.updated?'Sonuç yok.':'Henüz veri yok. "Şimdi yenile"ye bas (ilk güncelleme 2-3 dakika sürer).')));return;}
+  let last=null;
+  rows.forEach((r,i)=>{if(v.grouped&&s==='stars'&&r._cat!==last){last=r._cat;g.append(el('h3','cat-h',r._cat));}g.append(card(r,i));});
+}
+const ST={'calisiyor':['ok','Çalışıyor'],'seni-bekliyor':['warn','Seni bekliyor'],'bitti':['','Bitti']};
+const safe=u=>/^https:\/\//.test(u||'');
+async function loadLive(force){
+  try{LIVE=await (await fetch('/api/projects'+(force?'?force':''))).json();}catch(e){return;}
+  if(cur==='proj'&&editing<0)render();
+}
+setInterval(()=>{if(cur==='proj')loadLive(true);},120000);
+const BUILD={success:['ok','✅ Başarılı'],failure:['bad','❌ Başarısız'],cancelled:['warn','İptal'],timed_out:['bad','Zaman aşımı']};
+function liveBox(repo){
+  const d=LIVE&&LIVE.live&&LIVE.live[repo];const b=el('div','live');
+  const head=el('div','lrow');const a=el('a',null,repo);a.href='https://github.com/'+repo;a.target='_blank';a.rel='noopener';head.append(a,el('span','lk',d&&d.private?'🔒 gizli':''));b.append(head);
+  if(!d){b.append(el('span','lk','Yükleniyor...'));return b;}
+  if(d.error){b.append(el('span','chip bad',d.error+(DATA.has_token?'':' · Benim repolarım sekmesinden token ekle')));return b;}
+  if(d.build){const r=el('div','lrow');const s=d.build.status!=='completed'?['warn','⏳ Çalışıyor']:(BUILD[d.build.conclusion]||['',d.build.conclusion||'']);
+    const l=el('a',null,'Build #'+d.build.number+' · '+(d.build.name||''));if(safe(d.build.url)){l.href=d.build.url;l.target='_blank';}r.append(l,el('span','chip '+s[0],s[1]+' · '+ago(d.build.date)));b.append(r);}
+  if(d.commit){const r=el('div','lrow');const l=el('a',null,'Son commit: '+d.commit.msg);if(safe(d.commit.url)){l.href=d.commit.url;l.target='_blank';}r.append(l,el('span','lk',ago(d.commit.date)));b.append(r);}
+  const m=el('div','mini');
+  [['Açık issue',d.issues],['Açık PR',d.prs],['Milestone',d.milestone?d.milestone.done+'/'+d.milestone.total:'—']].forEach(([k,v])=>{const x=el('div');x.append(el('b',null,v==null?'—':String(v)),document.createTextNode(k));m.append(x);});
+  b.append(m);return b;
+}
+function projCard(pr,idx){
+  const c=el('div','proj');
+  const h=el('h3');h.append(el('span',null,pr.name),el('span','chip '+(pr.status==='Aktif'?'ok':pr.status==='Beklemede'?'warn':''),pr.status||''));c.append(h);
+  const ms=(pr.repos||[]).map(r=>LIVE&&LIVE.live&&LIVE.live[r]&&LIVE.live[r].milestone).find(Boolean);
+  const pct=ms?ms.pct:pr.progress;
+  if(pct!=null){const b=el('div','pbar');const i=el('i');i.style.width=Math.max(0,Math.min(100,pct))+'%';b.append(i);c.append(el('span','plbl','İlerleme %'+pct+(ms?' · milestone "'+ms.title+'" (canlı)':' · elle girildi')),b);}
+  if(pr.summary)c.append(el('div','desc',pr.summary));
+  if(editing===idx){
+    const f=el('div','edit');const st=el('select');['Aktif','Beklemede','Bitti'].forEach(o=>st.append(new Option(o,o,false,o===pr.status)));
+    const pg=el('input');pg.type='number';pg.min=0;pg.max=100;pg.value=pr.progress??0;pg.style.width='70px';
+    const nx=el('textarea');nx.value=pr.next||'';
+    const sv=el('button',null,'Kaydet');sv.className='btn';const cn=el('button','linkbtn','vazgeç');
+    sv.onclick=async()=>{await fetch('/api/project-edit',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({index:idx,status:st.value,progress:pg.value,next:nx.value})});editing=-1;load();};
+    cn.onclick=()=>{editing=-1;render();};
+    const r1=el('div','erow');r1.append(el('span','plbl','Durum'),st,el('span','plbl','İlerleme %'),pg);
+    f.append(r1,el('span','plbl','Sıradaki adım'),nx,(()=>{const r=el('div','erow');r.append(sv,cn);return r;})());c.append(f);
+  } else {
+    if(pr.next){c.append(el('span','plbl','Sıradaki adım'),el('div',null,pr.next));}
+    const e=el('button','linkbtn','düzenle');e.onclick=()=>{editing=idx;render();};c.append(e);
+  }
+  (pr.repos||[]).forEach(r=>c.append(liveBox(r)));
+  if((pr.threads||[]).length){
+    c.append(el('span','plbl','Claude threadleri'));const tl=el('div','tlist');
+    pr.threads.forEach(t=>{const a=el('a');if(safe(t.url)){a.href=t.url;a.target='_blank';a.rel='noopener';}a.append(el('span',null,t.title),el('span','lk','↗'));tl.append(a);});
+    c.append(tl);
+  }
+  if((pr.links||[]).length){const l=el('div','links');pr.links.forEach(k=>{if(!safe(k.url))return;const a=el('a',null,k.title);a.href=k.url;a.target='_blank';a.rel='noopener';l.append(a);});c.append(el('span','plbl','Bağlantılar'),l);}
+  return c;
+}
+function connectPanel(){
+  const c=el('div','connect');
+  c.append(el('b',null,'GitHub hesabını bağla'),el('span',null,'Kendi repolarını (gizliler dahil) burada görmek için salt okunur bir token gerekiyor. Token sadece bu bilgisayarda, uygulamanın data klasöründe saklanır.'));
+  const ol=el('ol');
+  const li1=el('li');const a=el('a',null,'Bu sayfayı aç');a.href='https://github.com/settings/personal-access-tokens/new';a.target='_blank';li1.append(a,document.createTextNode(' (Fine-grained token).'));
+  ol.append(li1,el('li',null,'Repository access: "All repositories". Permissions: Actions, Contents, Issues, Pull requests için "Read-only" seç (Metadata otomatik gelir). Yazma izni verme.'),el('li',null,'Generate token de, çıkan kodu aşağıya yapıştır.'));
+  const row=el('div','row');const inp=el('input');inp.type='password';inp.placeholder='github_pat_...';const b=el('button',null,'Bağla');
+  const msg=el('span');b.onclick=async()=>{b.disabled=true;msg.textContent='Kontrol ediliyor...';msg.className='';const r=await saveToken(inp.value);b.disabled=false;if(!r.ok){msg.textContent=r.error||'Olmadı';msg.className='err';}};
+  row.append(inp,b);c.append(ol,row,msg);return c;
+}
+async function saveToken(t){
+  const r=await (await fetch('/api/token',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({token:t})})).json();
+  if(r.ok){await load();if(t){showStatus({running:true});watch();}}
+  return r;
+}
+function showStatus(st){
+  const u=DATA&&DATA.updated?'Son güncelleme: '+new Date(DATA.updated).toLocaleString('tr-TR'):'Henüz güncellenmedi';
+  $('#status').textContent=st&&st.running?'Güncelleniyor... '+(st.progress||''):u+(st&&st.message&&!st.message.startsWith('Güncellendi')?' · '+st.message:'');
+  $('#ref').disabled=!!(st&&st.running);
+}
+async function load(){
+  DATA=await (await fetch('/api/data')).json();nav();render();showStatus(DATA.status);
+  const u=$('#upd');u.hidden=!DATA.update;if(DATA.update)$('#updbtn').textContent='⬆ Güncelleme var: v'+DATA.version+' → v'+DATA.update;
+}
+let poll=null;
+async function watch(){
+  clearInterval(poll);
+  poll=setInterval(async()=>{const st=await (await fetch('/api/status')).json();showStatus(st);if(!st.running){clearInterval(poll);load();}},3000);
+}
+$('#ref').onclick=async()=>{await fetch('/api/refresh',{method:'POST',headers:{'X-Radar':'1'}});showStatus({running:true});watch();};
+$('#updbtn').onclick=async()=>{$('#updbtn').disabled=true;$('#updbtn').textContent='Güncelleniyor, birkaç saniye...';await fetch('/api/update',{method:'POST',headers:{'X-Radar':'1'}});setTimeout(()=>location.reload(),6000);};
+$('#q').oninput=render;$('#sort').onchange=render;
+load().then(()=>{if(DATA.status&&DATA.status.running)watch();});
+setInterval(load,10*60*1000);
+</script></body></html>

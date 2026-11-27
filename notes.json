@@ -1,0 +1,166 @@
+{
+ "_aciklama": "Elle yazılmış notlar. Anahtar: sahip/repo (küçük harf). İstediğin repoya not ekleyebilirsin.",
+ "notes": {
+  "tencent-hunyuan/hunyuan3d-2": {
+   "fit": "Kısmen",
+   "vram": 6,
+   "quality": 4,
+   "text": "6GB'de sadece 'mini/turbo' şekil modeli rahat döner; doku aşaması 16GB istiyor, onu ancak CPU'ya taşıyan yavaş ayarlarla deneyebilirsin. Yıldızı en yüksek ve kalitesi gerçekten iyi, ama senin kartında yarım çalışır.",
+   "license": "Tencent Hunyuan Community License. Türkiye'de ücretsiz; AB, İngiltere ve G. Kore hariç. Aylık 1M+ aktif kullanıcıda ayrı izin gerekir."
+  },
+  "microsoft/trellis": {
+   "fit": "Zor",
+   "vram": 16,
+   "quality": 4,
+   "text": "Kalitesi Hunyuan3D-2 ile aynı lig. Resmi gereksinim 16GB; topluluk düşük VRAM sürümleri ~8GB'e iniyor, 6GB'de çalışacağının garantisi yok. Windows kurulumu zahmetli.",
+   "license": "Kod MIT. Ama bağımlılığı nvdiffrast NVIDIA'nın ticari olmayan lisansıyla geliyor; ürettiğin model için risk düşük, kesin değil."
+  },
+  "microsoft/trellis.2": {
+   "fit": "Çalışmaz",
+   "vram": 24,
+   "quality": 5,
+   "text": "Listedeki en iyi sonuçlardan biri, ama 24GB VRAM istiyor. Senin kartında çalışmaz; sadece Hugging Face demosundan denenebilir (ücretsiz, sıra bekletir).",
+   "license": "MIT."
+  },
+  "openai/shap-e": {
+   "fit": "Çalışır",
+   "vram": 6,
+   "quality": 1,
+   "text": "2023 modeli, 2024'ten beri güncellenmiyor. Yıldızı yüksek çünkü eski ve ünlü; bugün oyun asset'i için işe yaramaz.",
+   "license": "MIT, ticari kullanım serbest."
+  },
+  "vast-ai-research/triposr": {
+   "fit": "Çalışır",
+   "vram": 6,
+   "quality": 2,
+   "text": "Senin PC'nde zaten çalışıyor. Hızlı ama şekiller yumuşak ve 'balonumsu'; ince yüzgeç ve kuyruk detayını kaybeder. Kaba taslak için iyi, son model için zayıf.",
+   "license": "MIT, ticari kullanım serbest."
+  },
+  "threestudio-project/threestudio": {
+   "fit": "Çalışmaz",
+   "vram": 24,
+   "quality": 2,
+   "text": "Araştırma çerçevesi: tek model saatler sürer ve 16-24GB+ ister. 2024'ten beri neredeyse durgun. Senin için değil.",
+   "license": "Apache-2.0; içindeki her yöntemin kendi lisansı var."
+  },
+  "openai/point-e": {
+   "fit": "Çalışır",
+   "vram": 4,
+   "quality": 1,
+   "text": "Tarihsel öneme sahip, artık eskimiş. Atlayabilirsin.",
+   "license": "MIT."
+  },
+  "xxlong0/wonder3d": {
+   "fit": "Zor",
+   "vram": 12,
+   "quality": 3,
+   "text": "Çok açılı görüntü üretip ondan mesh çıkarıyor; birkaç dakika sürer. Yeni modeller (Hunyuan, TRELLIS) bunu geçti.",
+   "license": "MIT."
+  },
+  "tencentarc/instantmesh": {
+   "fit": "Zor",
+   "vram": 12,
+   "quality": 3,
+   "text": "2024'ün iyi açık modeliydi, 2025'ten beri güncellenmiyor. 6GB'de bellek hatası alma ihtimalin yüksek.",
+   "license": "Apache-2.0, ticari serbest."
+  },
+  "tencent-hunyuan/hunyuan3d-2.1": {
+   "fit": "Çalışmaz",
+   "vram": 29,
+   "quality": 5,
+   "text": "Açık kaynakta en iyi dokulu sonuçlardan biri. Senin kartında çalışmaz; ücretsiz Hugging Face demosu tek yolun.",
+   "license": "Tencent Hunyuan Community License (Hunyuan3D-2 ile aynı koşullar)."
+  },
+  "mrforexample/comfyui-3d-pack": {
+   "fit": "Kısmen",
+   "vram": null,
+   "quality": 3,
+   "text": "Kendisi model değil, ComfyUI içinde TripoSR, Hunyuan, TRELLIS vb. çalıştırır. Windows'ta kurulumu meşhur derecede zor; yeni başlayan biri için zaman kaybı olabilir.",
+   "license": "Paket MIT; içindeki her modelin lisansı ayrı (bazıları ticari değil)."
+  },
+  "aiuniai/unique3d": {
+   "fit": "Zor",
+   "vram": 16,
+   "quality": 4,
+   "text": "Tek görselden şaşırtıcı iyi doku verir ama 6GB'ye sığması zor. Demo üzerinden denemek daha mantıklı.",
+   "license": "MIT."
+  },
+  "wgsxm/partcrafter": {
+   "fit": "Zor",
+   "vram": null,
+   "quality": 3,
+   "text": "Fikir olarak balığa uygun (gövde, yüzgeç, kuyruk ayrı). Araştırma kodu, VRAM ihtiyacı belgelenmemiş; deneysel say.",
+   "license": "MIT."
+  },
+  "vast-ai-research/unirig": {
+   "fit": "Zor",
+   "vram": 8,
+   "quality": 3,
+   "text": "Herhangi bir mesh'e otomatik iskelet ve ağırlık atar. Dürüst not: balık yüzmesi için çoğu oyun iskelet yerine shader ile dalga hareketi kullanır; daha ucuz ve senin kod-tabanlı modellerinle uyumlu.",
+   "license": "MIT."
+  },
+  "3dtopia/lgm": {
+   "fit": "Zor",
+   "vram": 10,
+   "quality": 2,
+   "text": "2024 modeli, güncellenmiyor. Senin işine yaramaz.",
+   "license": "MIT."
+  },
+  "stability-ai/stable-fast-3d": {
+   "fit": "Çalışır",
+   "vram": 6,
+   "quality": 3,
+   "text": "Yarım saniyede model üretir ve 6GB'de sınırda çalışır. Kalite orta ama mobil oyun için en pratik seçenek. TripoSR'den sonra deneyeceğin ilk şey bu olmalı.",
+   "license": "Stability AI Community License: yıllık geliri 1M$ altındaysa ticari dahil ücretsiz. Hugging Face'te model erişimi için onay gerekir."
+  },
+  "vast-ai-research/triposg": {
+   "fit": "Zor",
+   "vram": 8,
+   "quality": 4,
+   "text": "TripoSR'nin çok daha iyi şekil veren halefi. 8GB istiyor, 6GB'de düşük çözünürlükle belki. Doku olmaması büyük eksik.",
+   "license": "MIT, ticari serbest."
+  },
+  "dreamtechai/direct3d-s2": {
+   "fit": "Çalışmaz",
+   "vram": 10,
+   "quality": 4,
+   "text": "Yüksek çözünürlüklü şekil üretir; 10GB'den aşağısı yok. Senin için değil.",
+   "license": "MIT."
+  },
+  "stability-ai/stable-point-aware-3d": {
+   "fit": "Zor",
+   "vram": 10,
+   "quality": 3,
+   "text": "SF3D'nin geliştirilmiş hali ama ~10GB istiyor. 6GB'de SF3D'de kal.",
+   "license": "Stability AI Community License (1M$ altı ücretsiz)."
+  },
+  "stepfun-ai/step1x-3d": {
+   "fit": "Çalışmaz",
+   "vram": 27,
+   "quality": 4,
+   "text": "Lisansı en temizlerden, ama donanım ihtiyacı senin kartının çok üstünde.",
+   "license": "Apache-2.0, ticari serbest."
+  },
+  "hkust-sail/craftsman3d": {
+   "fit": "Zor",
+   "vram": null,
+   "quality": 3,
+   "text": "Lisans belirsizliği yüzünden önerilmez.",
+   "license": "GitHub lisans göstermiyor: lisans belirsiz. Netleşmeden kullanma."
+  },
+  "thu-ml/crm": {
+   "fit": "Zor",
+   "vram": 8,
+   "quality": 2,
+   "text": "Hızlı ama 2024 kalitesi; yeni modeller geçti.",
+   "license": "MIT."
+  },
+  "tencent-hunyuan/hunyuan3d-omni": {
+   "fit": "Çalışmaz",
+   "vram": 10,
+   "quality": 4,
+   "text": "Şekli nokta bulutu, kutu veya iskeletle yönlendirmeye yarıyor. İlginç ama senin donanımın ve ihtiyacın için fazla.",
+   "license": "Tencent Hunyuan Community License."
+  }
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "_aciklama": "Projelerim sekmesi. 'repos' içindeki GitHub repolarından durum canlı çekilir. status/progress/next uygulama içinden düzenlenebilir.",
+ "projects": [
+  {
+   "name": "Project Aquarium (FishVille)",
+   "status": "Aktif",
+   "progress": 55,
+   "summary": "iOS akvaryum oyunu. Unity 6, URP. TASK-001..010 bitti.",
+   "next": "Build #8'i telefonda test et: yosun, tek parmakla kamera, pleco takibi, ekran düzeni.",
+   "links": [
+    {
+     "title": "GitHub repo",
+     "url": "https://github.com/ToEzForDarwin/ProjectAquarium"
+    },
+    {
+     "title": "Teknik mimari V0.7",
+     "url": "https://claude.ai/artifact/3yWYHtXXQMwS6NXztUkr9Y"
+    },
+    {
+     "title": "Oyun döngüsü ve kurallar",
+     "url": "https://claude.ai/artifact/Hh363xgjTcooy9h1fHJt4s"
+    },
+    {
+     "title": "3D repo karnesi",
+     "url": "https://claude.ai/artifact/JipX5KkV9jwJL4iTd5nLy6"
+    }
+   ],
+   "threads": [
+    {
+     "title": "Fix iPhone build 7 feedback",
+     "url": "https://claude.ai/code/project/chan_013wPEXCDExSo4GYwRagTJww?thread=cmsg_013wPEXCDExSo4GYwRagTJwwB8y2JsWW2DYNxLavXGDE3y"
+    },
+    {
+     "title": "Build GitHub repo radar app",
+     "url": "https://claude.ai/code/project/chan_013wPEXCDExSo4GYwRagTJww?thread=cmsg_013wPEXCDExSo4GYwRagTJwwGvdPFEovFkAkGx4tK2nygy"
+    }
+   ],
+   "repos": [
+    "ToEzForDarwin/ProjectAquarium"
+   ]
+  }
+ ]
+}
