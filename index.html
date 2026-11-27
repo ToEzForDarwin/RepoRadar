@@ -75,6 +75,14 @@ main{padding:10px 12px 20px}
 .errs[hidden]{display:none}
 .errs .erow{display:flex;gap:8px;align-items:center}.errs .erow b{flex:1}
 .errs .eitem{color:var(--muted);font-size:11px;word-break:break-word}
+.note .nrow{display:block;margin-top:4px}.note .nrow i{font-style:normal;font-weight:600}
+.verdict{display:inline-block;border-radius:6px;padding:0 6px;margin-left:4px;font-size:10px;color:#fff;text-transform:none;letter-spacing:0}
+.verdict.ok{background:#2f9e5b}.verdict.warn{background:#d9822b}.verdict.bad{background:#c0392b}
+.trybtn{align-self:flex-start;background:var(--chip);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:3px 10px;cursor:pointer;font:inherit;font-size:12px}
+.trybox{border:1px dashed var(--line);border-radius:8px;padding:8px;font-size:12px;display:flex;flex-direction:column;gap:6px;cursor:default}
+.trybox code{display:block;flex:1;min-width:0;background:var(--chip);border-radius:6px;padding:4px 6px;font-size:11px;word-break:break-all;user-select:all}
+.trybox .crow{display:flex;gap:6px;align-items:center}
+.trybox .warnline{color:#d9822b}
 .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
 .cat-h{grid-column:1/-1;margin:6px 0 0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 </style></head>
@@ -148,9 +156,60 @@ function card(r,i){
   c.append(ch);
   if(r.desc)c.append(el('div','desc',r.desc));
   const n=(DATA.notes||{})[r.repo.toLowerCase()];
-  if(n){const d=el('div','note');d.append(el('b',null,'Claude notu · RTX 3050 6GB: '+n.fit+(n.vram?' · '+n.vram+' GB VRAM':'')+' · kalite '+n.quality+'/5'),el('span',null,n.text));c.append(d);}
+  if(n&&n.kind==='skill')c.append(skillNote(n));
+  else if(n){const d=el('div','note');d.append(el('b',null,'Claude notu · RTX 3050 6GB: '+n.fit+(n.vram?' · '+n.vram+' GB VRAM':'')+' · kalite '+n.quality+'/5'),el('span',null,n.text));c.append(d);}
+  if((n&&n.kind==='skill')||isSkill(r))c.append(tryButton(r,n));
   c.onclick=e=>{if(e.target.closest('a'))return;c.classList.toggle('open');};
   return c;
+}
+const SKILL_TOPICS=['claude-skills','agent-skills','claude-code-skills','claude-skill','claude-code','claude-code-plugin','agent-skill'];
+const isSkill=r=>(r.topics||[]).some(t=>SKILL_TOPICS.includes(t));
+const VERDICT={'Dene':'ok','Dikkatli dene':'warn','Gerek yok':'bad'};
+function skillNote(n){
+  const d=el('div','note');const h=el('b',null,'Claude notu');h.append(el('em','verdict '+(VERDICT[n.verdict]||''),n.verdict));d.append(h);
+  d.append(document.createTextNode(n.what));
+  const row=(k,v)=>{if(!v)return;const x=el('span','nrow');x.append(el('i',null,k+': '),document.createTextNode(v));d.append(x);};
+  row('Sana faydası',n.use);row('Gizli bedeli',n.cost);row('İş bilgisayarı',n.work);
+  if(n.checked)d.append(el('span','nrow lk','Kodunu inceledim: '+new Date(n.checked).toLocaleDateString('tr-TR')));
+  return d;
+}
+const SCAN={};
+async function copyText(t,b){try{await navigator.clipboard.writeText(t);}catch(e){const a=document.createElement('textarea');a.value=t;document.body.append(a);a.select();document.execCommand('copy');a.remove();}
+  const o=b.textContent;b.textContent='✓';setTimeout(()=>b.textContent=o,1200);}
+function cmdRow(t){const r=el('div','crow');const c=el('code',null,t);const b=el('button','linkbtn','kopyala');b.onclick=e=>{e.stopPropagation();copyText(t,b);};r.append(c,b);return r;}
+function tryButton(r,n){
+  const wrap=el('div');wrap.style.display='contents';
+  const b=el('button','trybtn','🧪 Dene');let box=null;
+  b.onclick=async e=>{e.stopPropagation();if(box){box.remove();box=null;b.textContent='🧪 Dene';return;}
+    box=el('div','trybox');box.onclick=ev=>ev.stopPropagation();b.textContent='🧪 Kapat';wrap.append(box);
+    fillTry(box,r,n,SCAN[r.repo]);
+    if(!SCAN[r.repo]){box.append(el('span','lk','Repo taranıyor...'));
+      try{SCAN[r.repo]=await (await fetch('/api/scan?repo='+encodeURIComponent(r.repo))).json();}catch(x){SCAN[r.repo]={error:'Uygulamaya ulaşılamadı'};}
+      if(box){box.replaceChildren();fillTry(box,r,n,SCAN[r.repo]);}}};
+  wrap.append(b);return wrap;
+}
+function fillTry(box,r,n,sc){
+  const t=(n&&n.try)||{};let cc=(t.cc||[]).slice();
+  if(!cc.length&&sc&&sc.marketplace&&sc.marketplace!=='?'){cc=['/plugin marketplace add '+r.repo];if(sc.plugins&&sc.plugins.length)cc.push('/plugin install '+sc.plugins[0]+'@'+sc.marketplace);}
+  if(cc.length){box.append(el('b',null,'Claude Code içinde sırayla yaz:'));cc.forEach(x=>box.append(cmdRow(x)));}
+  if(t.other)box.append(el('span',null,t.other));
+  if(!cc.length&&sc&&!sc.error&&sc.skills){
+    box.append(el('b',null,'Elle kurulum ('+sc.skills+' skill bulundu):'));
+    box.append(cmdRow('git clone https://github.com/'+r.repo+'.git'));
+    box.append(el('span',null,'SKILL.md dosyasını içeren klasörü (ör. '+(sc.skill_dirs[0]||'.')+') %USERPROFILE%\\.claude\\skills\\ altına kopyala. claude.ai için o klasörü ZIP yapıp Ayarlar > Yetenekler > Skills bölümüne yükle.'));
+  }
+  if(sc&&!sc.error){
+    const w=[];
+    if(sc.hooks)w.push('Hook içeriyor: kurulunca bazı olaylarda (oturum başı, her mesaj vb.) kendi komutunu otomatik çalıştırır.');
+    if(sc.mcp)w.push('MCP sunucusu içeriyor: ajana yeni araçlar ve muhtemelen ağ erişimi ekler.');
+    if(sc.install_script&&sc.install_script.length)w.push('Kurulum betiği var ('+sc.install_script.join(', ')+'): çalıştırmadan önce içini oku.');
+    if(sc.npm)w.push('npm paketi: kurulumda bağımlılık indirir; "postinstall" betikleri otomatik çalışabilir.');
+    if(!sc.skills&&!sc.marketplace)w.push('Repoda SKILL.md bulunamadı: bu bir skill değil, ayrı bir uygulama olabilir.');
+    if(w.length){box.append(el('b',null,'Otomatik tarama (insan yorumu değil):'));w.forEach(x=>box.append(el('span','warnline','• '+x)));}
+    else if(!n)box.append(el('span','lk','Otomatik tarama: hook, MCP veya kurulum betiği görünmüyor; sadece talimat dosyaları.'));
+  } else if(sc&&sc.error)box.append(el('span','err',sc.error));
+  if(!n)box.append(el('span','lk','Bu repo için henüz Claude notu yok. Faydalı mı, bedeli var mı diye bakmamı istersen adını bana yaz.'));
+  const a=el('a',null,'GitHub\'da aç ↗');a.href='https://github.com/'+r.repo;a.target='_blank';a.rel='noopener';box.append(a);
 }
 function render(){
   const v=views().find(x=>x&&x.id===cur)||views()[0];

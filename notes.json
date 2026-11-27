@@ -161,6 +161,305 @@
    "quality": 4,
    "text": "Şekli nokta bulutu, kutu veya iskeletle yönlendirmeye yarıyor. İlginç ama senin donanımın ve ihtiyacın için fazla.",
    "license": "Tencent Hunyuan Community License."
+  },
+  "anthropics/skills": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Anthropic'in resmi skill deposu. En değerlisi Word, Excel, PowerPoint ve PDF üreten 'document-skills'; gerisi örnek ve şablon.",
+   "use": "İş analisti için en doğrudan faydalı paket: rapor, tablo, sunum dosyası üretmek. claude.ai'da bu yetenekler zaten yerleşik geliyor, kurulum Claude Code içindir.",
+   "cost": "Gizli bedel yok: hook, telemetri, ücretli katman yok. Belge skill'leri açık kaynak değil, 'kaynağı görülebilir' lisanslı: kullanabilirsin, dağıtamazsın.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add anthropics/skills",
+     "/plugin install document-skills@anthropic-agent-skills"
+    ],
+    "other": ""
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "addyosmani/agent-skills": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Google'dan Addy Osmani'nin yazılım geliştirme iş akışı: /spec, /plan, /build, /test, /review gibi 10 komut ve 26 skill.",
+   "use": "Senin için en ilginç ikisi: 'interview-me' (gereksinimleri tek tek soru sorarak netleştirir) ve '/spec' (iş isteğinden PRD çıkarır). Bunlar doğrudan iş analizi.",
+   "cost": "Gizli bedel yok: sadece talimat dosyaları, hook yok, telemetri yok, MIT lisans.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add addyosmani/agent-skills",
+     "/plugin install agent-skills@addy-agent-skills"
+    ],
+    "other": "Tek skill: npx skills add addyosmani/agent-skills --skill interview-me"
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "coreyhaines31/marketingskills": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "53 pazarlama skill'i: dönüşüm optimizasyonu, metin yazarlığı, SEO, analitik, e-posta, fiyatlandırma.",
+   "use": "Instagram yan hesabı ve pazarlama hedeflerin için en kullanışlı paket. Önce 'product-marketing' skill'ini doldur, diğerleri onu okuyor.",
+   "cost": "Skill'ler ücretsiz ve MIT. Para kazanma modeli açık: 'Partners' bölümündeki araçlar ücretli sponsorlar, yazarın ajansına da yönlendiriyor. Skill'ler o araçları önerirse atla.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add coreyhaines31/marketingskills",
+     "/plugin install marketing-skills@marketingskills"
+    ],
+    "other": "npx skills add coreyhaines31/marketingskills --skill copywriting"
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "blader/humanizer": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Yapay zekâ yazısındaki 26 kalıbı ('Bu sadece X değil, Y', 'Şunu bir düşünün' vb.) temizleyip metni insan yazmış gibi yapan tek bir skill.",
+   "use": "Instagram açıklamaları, LinkedIn gönderileri ve İngilizce yazışmaların için işe yarar. Dürüst tarafı: kendisi de söylüyor, yapay zekâ dedektörlerini atlatmak için değil.",
+   "cost": "Gizli bedel yok: tek bir talimat dosyası, script yok, telemetri yok. README'de sadece sponsor bağlantısı var.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add blader/humanizer",
+     "/plugin install humanizer@humanizer"
+    ],
+    "other": "claude.ai: SKILL.md dosyasını ZIP'leyip Ayarlar > Yetenekler > Skills'e yükle."
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "cathrynlavery/diagram-design": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Tek dosyalık HTML+SVG diyagram çizer: 52 tür (süreç akışı, mimari, sıralama, dörtlü matris...). Markanın renklerine uydurabiliyor.",
+   "use": "İş analizi için çok uygun: süreç akışı, paydaş haritası, etki/efor matrisi. Çıktı çift tıkla açılan tek bir dosya.",
+   "cost": "Gizli bedel yok: hook yok, telemetri yok, script'ler yerelde çalışıyor. 'Markana uydur' özelliği verdiğin siteyi okur, o kadar.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add cathrynlavery/diagram-design",
+     "/plugin install diagram-design@diagram-design"
+    ],
+    "other": "npx skills add cathrynlavery/diagram-design"
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "career-ops-hq/career-ops": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Açık kaynak iş arama ajanı: ilanın hâlâ açık olup olmadığını ve sana uyup uymadığını puanlar, CV'ni ilana göre uyarlar, başvuru cevaplarını taslaklar. Göndermeyi sen yaparsın.",
+   "use": "Finans ve teknoloji rollerine başvuran biri için doğrudan işe yarar. Ücretsiz ve yerel çalışıyor.",
+   "cost": "Para istemiyor ama her ilan değerlendirmesi Claude kullanım hakkından yiyor. npm kurulumunda otomatik çalışan bir script ve her oturum başında çalışan bir hook var. LinkedIn gibi sitelerden otomatik veri çekmek o sitelerin kurallarına aykırı olabilir.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add career-ops-hq/career-ops",
+     "/plugin install career-ops@career-ops"
+    ],
+    "other": "npx @santifer/career-ops init"
+   },
+   "work": "İş bilgisayarında kurma: iş aramanı şirket bilgisayarında yapmak hem görünür hem riskli. Kişisel bilgisayarında dene.",
+   "checked": "2026-11-27"
+  },
+  "mvanhorn/last30days-skill": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Bir konuyu son 30 günde Reddit, Hacker News, YouTube, X, Polymarket gibi yerlerde araştırıp, beğeni ve oy sayısına göre özetler.",
+   "use": "Instagram içerik fikri bulmak ve 'insanlar şu an bu konuda ne diyor' sorusu için iyi. Reddit, HN, arXiv ve GitHub anahtarsız ve ücretsiz çalışıyor.",
+   "cost": "Temel kaynaklar ücretsiz. X, TikTok gibi kaynaklar için Apify veya BrightData gibi ücretli veri servisleri öneriyor; onlara gerek yok. İzin verirsen kendi Reddit hesabınla arama yapabiliyor, verme. Her yanıt sonunda küçük bir hook çalışıyor.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add mvanhorn/last30days-skill",
+     "/plugin install last30days"
+    ],
+    "other": ""
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "shanraisshan/claude-code-best-practice": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Kurulacak bir şey değil, okunacak bir rehber: Claude Code'da hook, MCP, skill, alt ajan, bellek gibi özelliklerin iyi kullanım örnekleri.",
+   "use": "Claude Code'u öğrenmek için ücretsiz ve düzenli güncellenen bir kaynak. Tutorial klasörü sıfırdan başlıyor.",
+   "cost": "Gizli bedel yok. Sadece belgeler ve örnek ayarlar; örnek hook'ları kopyalarsan ne yaptıklarını okuyarak kopyala.",
+   "try": {
+    "cc": [],
+    "other": "Okumak için GitHub'da aç; README'deki 'How to Use' bölümünden başla."
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "leonxlnx/taste-skill": {
+   "kind": "skill",
+   "verdict": "Dene",
+   "what": "Kod yazan ajana 'tasarım zevki' verir: renk, tipografi, boşluk, referans görsel kuralları. Sıradan yapay zekâ görünümlü sayfaları önlemeye çalışıyor.",
+   "use": "Web sayfası, açılış sayfası veya uygulama arayüzü yaparken faydalı. Bu panelin kendisini güzelleştirmek için bile kullanılabilir.",
+   "cost": "Gizli bedel yok: hook yok, telemetri yok. Görsel ararken Unsplash ve Wikimedia'dan resim çekiyor. README'de sponsorlar var, o kadar.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add Leonxlnx/taste-skill",
+     "/plugin install taste-skill@taste-skill"
+    ],
+    "other": "npx skills add https://github.com/Leonxlnx/taste-skill --skill design-taste-frontend"
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "dietrichgebert/ponytail": {
+   "kind": "skill",
+   "verdict": "Dikkatli dene",
+   "what": "Ajanın 'tembel kıdemli geliştirici' gibi davranmasını sağlar: daha az kod, gereksiz soyutlama yok, riskli yere test.",
+   "use": "Kod yazdırdığın projelerde (Unity oyunu, bu panel) şişkin kodu azaltabilir. Kod yazdırmıyorsan sana bir faydası yok.",
+   "cost": "'%53 daha az kod' gibi rakamlar yazarın kendi ölçümü, bağımsız doğrulama yok. Her mesajında ve her oturum başında kendi script'ini çalıştırıp talimat ekliyor; çalışma şekli bu, ama ajanın davranışını sürekli değiştirdiğini bil. Eklentide telemetri bulmadım.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add DietrichGebert/ponytail",
+     "/plugin install ponytail@ponytail"
+    ],
+    "other": ""
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "thedotmack/claude-mem": {
+   "kind": "skill",
+   "verdict": "Dikkatli dene",
+   "what": "Claude Code'a oturumlar arası hafıza ekler: ajanın yaptığı her şeyi kaydedip sonraki oturumda ilgili kısmı geri verir.",
+   "use": "Uzun projelerde işe yarayabilir. Ama Claude Code'un kendi hafızası (CLAUDE.md, otomatik hafıza) çoğu ihtiyacı zaten karşılıyor; önce onu dene.",
+   "cost": "Tam 'bedavaysa ürün sensin' örneği: anonim kullanım analitiği varsayılan olarak AÇIK ('npx claude-mem telemetry disable' ile kapanır). Bulut senkronu isteğe bağlı ve 'cmem-pro' adlı ücretli bir eklentisi var. Her mesajda arka planda bir servis (bun) çalıştırıp tüm oturumu kaydediyor.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add thedotmack/claude-mem",
+     "/plugin install claude-mem@thedotmack"
+    ],
+    "other": ""
+   },
+   "work": "İş bilgisayarında kurma: şirket kodunu ve konuşmalarını üçüncü taraf bir aracın veritabanına yazar.",
+   "checked": "2026-11-27"
+  },
+  "pbakaus/impeccable": {
+   "kind": "skill",
+   "verdict": "Dikkatli dene",
+   "what": "Arayüz tasarımı için komut seti: 'polish', 'bolder', 'critique', 'audit'. 62 kurallı bir 'yapay zekâ çirkinliği' dedektörü de var.",
+   "use": "Var olan bir sayfayı iyileştirmede güçlü. Ara sıra web arayüzü yapıyorsan dene; yapmıyorsan gerek yok.",
+   "cost": "Anonim telemetri varsayılan olarak açık (IMPECCABLE_NO_TELEMETRY=1 ile kapanır). Telemetriyi kapatsan da yeni tasarımda impeccable.style sitesinden veri çekiyor. Hesap sistemi var, yani ücretli özellikler geliyor olabilir. Oturum başında, her araç kullanımında ve yanıt sonunda hook çalışıyor.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add pbakaus/impeccable",
+     "/plugin install impeccable@impeccable"
+    ],
+    "other": "npx impeccable install"
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "tt-a1i/archify": {
+   "kind": "skill",
+   "verdict": "Dikkatli dene",
+   "what": "Bir fikri, planı veya kod tabanını etkileşimli tek sayfalık HTML diyagrama çevirir: 10 diyagram türü, mimari analiz, PR anlatımı, videoya aktarma.",
+   "use": "Süreç ve mimari anlatmak için iş analistine uygun. Aynı işi daha sade ve daha az riskle diagram-design de yapıyor.",
+   "cost": "Skill'in kendisi açık kaynak. İki uyarı: (1) resmi kurulum komutu GitHub yerine kendi sitesinden (archify.si) indiriyor ve '--yes' ile soru sormadan kuruyor. (2) README'deki sponsorların çoğu 'resmi fiyatın %1'i' gibi vaatlerle Claude erişimi satan aracı servisler; bunları kullanırsan kodun ve yazdıkların onların sunucusundan geçer. Uzak dur.",
+   "try": {
+    "cc": [],
+    "other": "git clone https://github.com/tt-a1i/archify (GitHub'dan kur, sponsor servisleri kullanma)"
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "egonex-ai/understand-anything": {
+   "kind": "skill",
+   "verdict": "Dikkatli dene",
+   "what": "Bir kod tabanını veya belge klasörünü, sorular sorabileceğin etkileşimli bir bilgi grafiğine çevirir. Çok ajanlı bir analiz yapıyor.",
+   "use": "Büyük ve yabancı bir kod tabanına girerken faydalı. Senin şu anki projelerin küçük, kazancı düşük.",
+   "cost": "Çok ajanlı analiz, kullanım hakkını hızlı bitirir. Kurulum seçeneklerinden biri 'curl ... | bash' (internetten indirilen script'i okumadan çalıştırmak); onu değil /plugin yolunu kullan. Arkasında ürününü satmak isteyen bir şirket var. Hook'lar yerel: her araç kullanımında grafiği güncelliyor.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add Egonex-AI/Understand-Anything",
+     "/plugin install understand-anything"
+    ],
+    "other": ""
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "heygen-com/hyperframes": {
+   "kind": "skill",
+   "verdict": "Dikkatli dene",
+   "what": "HeyGen'in açık kaynak video aracı: HTML ve animasyondan MP4 video üretir. Claude Code ile 'şöyle bir video yap' diyebiliyorsun.",
+   "use": "Instagram Reels ve tanıtım videoları için gerçekten işe yarayabilir; çekirdek araç ücretsiz (Apache 2.0) ve yerelde çalışıyor.",
+   "cost": "Açık kaynak çekirdek, HeyGen'in ücretli Studio'suna (Pro aylık 25$) giden bir kapı. 'media-use' skill'inde telemetri varsayılan açık (HYPERFRAMES_NO_TELEMETRY=1 ile kapanır). Bazı ses ve avatar özellikleri HeyGen hesabı istiyor.",
+   "try": {
+    "cc": [
+     "/plugin marketplace add heygen-com/hyperframes",
+     "/plugin install hyperframes@hyperframes"
+    ],
+    "other": "npx skills add heygen-com/hyperframes"
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "composiohq/awesome-claude-skills": {
+   "kind": "skill",
+   "verdict": "Dikkatli dene",
+   "what": "Topluluğun en iyi skill'lerinin derlendiği bir liste (1000+), ayrıca birkaç hazır skill.",
+   "use": "Liste olarak gezinmeye değer: ne tür skill'ler var görürsün.",
+   "cost": "Listeyi Composio şirketi tutuyor ve en üstte kendi 'connect-apps' eklentisini öne çıkarıyor. O eklenti Gmail, Slack gibi hesaplarına Composio'nun bulutu üzerinden bağlanır, yani verin onların sunucusundan geçer; ücretsiz katmandan sonra ücretli. Listeyi oku, connect-apps'i kurma. Lisans dosyası yok.",
+   "try": {
+    "cc": [],
+    "other": "Sadece GitHub'da aç ve listeyi gez."
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "morluto/rea": {
+   "kind": "skill",
+   "verdict": "Gerek yok",
+   "what": "Uygulamaları ve derlenmiş programları tersine mühendislikle inceleyen bir MCP sunucusu ve skill seti (Ghidra gibi araçları kullanıyor).",
+   "use": "Güvenlik araştırması yapmıyorsan sana bir faydası yok.",
+   "cost": "Başkasının uygulamasını tersine mühendislikle incelemek çoğu zaman o uygulamanın lisansına aykırıdır. Kurulumu ağır (npm paketi ve yerel araçlar). İş bilgisayarında güvenlik yazılımı büyük ihtimalle alarm verir. Yıldız sayısı tek başına güven göstergesi değil.",
+   "try": {
+    "cc": [],
+    "other": ""
+   },
+   "work": "İş bilgisayarına kesinlikle kurma.",
+   "checked": "2026-11-27"
+  },
+  "paperclipai/paperclip": {
+   "kind": "skill",
+   "verdict": "Gerek yok",
+   "what": "Skill değil, ayrı bir uygulama: Node.js sunucusu ve web arayüzüyle bir 'yapay zekâ ajanlarından oluşan şirket' yönetir (CEO ajanı, bütçe, hedefler).",
+   "use": "Senin ölçeğin için fazla. 'İnsansız şirket' fikri şu an deneme aşamasında.",
+   "cost": "Bedava ama asıl maliyet token: birden çok ajan sürekli çalıştıkça API faturası büyür. Kurulum ve bakım ağır, çok sayıda API anahtarı istiyor.",
+   "try": {
+    "cc": [],
+    "other": ""
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "nexu-io/open-design": {
+   "kind": "skill",
+   "verdict": "Gerek yok",
+   "what": "Açık kaynak bir tasarım ajanı çalışma alanı: masaüstü uygulaması, 500+ tasarım skill'i ve kendi bulut hizmeti.",
+   "use": "Tasarım işi yapmıyorsan gerek yok. Tasarım için taste-skill daha hafif bir başlangıç.",
+   "cost": "'Açık kaynak vitrin, gelir bulutta' modeli: README'nin en üstünde ücretli kredi kampanyası var. Telemetri altyapısı var, kurulumda otomatik çalışan npm script'i ve 'curl ... | sh' ile kurulum seçeneği var. Çok büyük bir kurulum.",
+   "try": {
+    "cc": [],
+    "other": ""
+   },
+   "work": "",
+   "checked": "2026-11-27"
+  },
+  "code-yeongyu/oh-my-openagent": {
+   "kind": "skill",
+   "verdict": "Gerek yok",
+   "what": "Claude skill'i değil, kendi ajan uygulaması (OmO): çok modelli, 'mass ulw' gibi komutlarla büyük işleri otomatik yaptırıyor.",
+   "use": "Claude Code'u zaten kullanıyorsan üstüne bir katman daha eklemenin sana faydası yok.",
+   "cost": "Kurulum, internetten indirilen bir script'i okumadan çalıştırıyor (Windows'ta 'irm ... | iex'). Anonim telemetri var (OMO_DISABLE_TELEMETRY ile kapanır). Lisansı standart değil. Birden çok modeli paralel çalıştırdığı için kullanım hakkını hızlı bitirir.",
+   "try": {
+    "cc": [],
+    "other": ""
+   },
+   "work": "İş bilgisayarında 'irm | iex' ile kurulum BT politikalarına büyük ihtimalle aykırı.",
+   "checked": "2026-11-27"
   }
  }
 }

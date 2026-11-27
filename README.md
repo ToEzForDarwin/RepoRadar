@@ -21,6 +21,11 @@ Sağ alttaki bildirim alanında mavi bir radar simgesi çıkar. Tıklayınca pen
 - **Proje notları**: her proje kartında son 5 not ve not yazma kutusu (Ctrl+Enter). Notlar reponda "📝 Proje notları" adlı tek bir issue'ya yorum olarak kaydedilir; ilk notta issue kendiliğinden açılır. Telefondaki GitHub uygulamasından da okuyup yazabilirsin. Yazmak için token'da Issues izni "Read and write" olmalı (diğer izinler Read-only kalabilir). Bu issue açık issue sayısına dahil edilmez.
 - **Benim repolarım**: GitHub hesabını bağlarsan gizliler dahil kendi repoların. Fine-grained token: Actions, Contents, Pull requests için Read-only, proje notu yazacaksan Issues için Read and write; token `data/token.txt` içinde sadece bu bilgisayarda durur.
 
+## Claude skill'leri
+Yeni **Claude skill'leri** sekmesi GitHub'daki en popüler skill repolarını listeler (eski kurulumlarda ilk açılışta `categories.json`'a bir kez eklenir; silersen geri gelmez).
+- **Claude notu**: en popüler 20 skill reposunun kodu indirilip incelendi. Her biri için ne işe yaradığı, sana faydası, gizli bedeli (telemetri, ücretli katman, otomatik çalışan hook, riskli kurulum) ve iş bilgisayarına uygun olup olmadığı yazar. Karar: Dene / Dikkatli dene / Gerek yok. Notlar `notes.json` içinde, elle yazıldı; listeye sonradan giren repolarda not olmaz.
+- **🧪 Dene**: kurulum komutlarını kopyalanabilir şekilde gösterir ve repoyu otomatik tarar (hook, MCP sunucusu, kurulum betiği, npm). Tarama sadece dosya adlarına bakar, insan yorumu değildir. Hiçbir şeyi senin yerine kurmaz.
+
 ## Sorunlar
 Bir şey ters giderse (internet yok, GitHub hatası, güncelleme inemedi) pencerenin üstünde turuncu bir **⚠ sorun** kutusu çıkar. "göster" son hataları listeler, "temizle" kapatır. Ayrıntılar `data\radar.log` içinde.
 
