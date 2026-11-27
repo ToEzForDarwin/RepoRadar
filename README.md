@@ -18,7 +18,8 @@ Sağ alttaki bildirim alanında mavi bir radar simgesi çıkar. Tıklayınca pen
 
 ## Sekmeler
 - **Projelerim**: her projenin GitHub reposundan **canlı** durum (son commit, son build sonucu, açık issue/PR, milestone ilerlemesi). 2 dakikada bir yenilenir; build bitince bildirim gelir. Durum, ilerleme ve sıradaki adımı karttaki "düzenle" ile değiştirirsin. Yeni proje eklemek için `projects.json`.
-- **Benim repolarım**: GitHub hesabını bağlarsan gizliler dahil kendi repoların. Fine-grained token: Actions, Contents, Issues, Pull requests için Read-only yeterli; token `data/token.txt` içinde sadece bu bilgisayarda durur.
+- **Proje notları**: her proje kartında son 5 not ve not yazma kutusu (Ctrl+Enter). Notlar reponda "📝 Proje notları" adlı tek bir issue'ya yorum olarak kaydedilir; ilk notta issue kendiliğinden açılır. Telefondaki GitHub uygulamasından da okuyup yazabilirsin. Yazmak için token'da Issues izni "Read and write" olmalı (diğer izinler Read-only kalabilir). Bu issue açık issue sayısına dahil edilmez.
+- **Benim repolarım**: GitHub hesabını bağlarsan gizliler dahil kendi repoların. Fine-grained token: Actions, Contents, Pull requests için Read-only, proje notu yazacaksan Issues için Read and write; token `data/token.txt` içinde sadece bu bilgisayarda durur.
 
 ## Ayarlar (`categories.json`)
 - `refresh_hours`: kaç saatte bir güncellensin (varsayılan 6).
