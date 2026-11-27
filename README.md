@@ -12,7 +12,7 @@ Ekranın sağında duran küçük bir pencere. GitHub'daki en iyi repoları konu
 3. İlk güncelleme **2-3 dakika** sürer (GitHub şifresiz kullanımda dakikada 10 aramaya izin veriyor). Pencerede "Güncelleniyor..." yazar.
 4. Windows açılınca kendiliğinden başlasın istersen bir kez `Baslangica_ekle.bat` çalıştır.
 
-Sağ alttaki bildirim alanında mavi bir radar simgesi çıkar. Tıklayınca pencere açılır; sağ tıkta **Şimdi yenile** ve **Çıkış** var. Pencereyi kapatsan da program simgede çalışmaya devam eder. Simge gizli simgeler (^) içinde kalırsa sürükleyip görev çubuğuna bırakabilirsin.
+Sağ alttaki bildirim alanında mavi bir radar simgesi çıkar. Tıklayınca pencere açılır; sağ tıkta **Şimdi yenile**, **Güncellemeleri denetle** ve **Çıkış** var. "Güncellemeleri denetle" yeni sürüm varsa indirip kendini yeniden başlatır, panel de kendiliğinden yenilenir. Pencereyi kapatsan da program simgede çalışmaya devam eder. Simge gizli simgeler (^) içinde kalırsa sürükleyip görev çubuğuna bırakabilirsin.
 
 İlk açılışta simge için `pystray` ve `pillow` paketleri otomatik kurulur (internet gerekir).
 

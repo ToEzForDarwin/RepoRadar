@@ -478,6 +478,38 @@ def check_update():
         return None
 
 
+def newer_version():
+    """GitHub'da daha yeni sürüm varsa onun numarası, yoksa None."""
+    v = _upd["latest"]
+    return v if v and vtuple(v) > vtuple(local_version()) else None
+
+
+def update_now(source="tepsi"):
+    """Tepsideki 'Güncellemeleri denetle': hemen bak, yeni sürüm varsa indir ve yeniden başla."""
+    if not get_token():
+        toast("Repo Radar", "Güncelleme için GitHub token gerekli (panelde Bağlan)."); return
+    if check_update() is None:
+        toast("Repo Radar", "Güncelleme kontrol edilemedi. Ayrıntı panelde Sorunlar kutusunda."); return
+    v = newer_version()
+    if not v:
+        toast("Repo Radar", f"Zaten güncelsin (v{local_version()})."); return
+    log(f"Güncelleme başlatıldı ({source}): v{local_version()} -> v{v}")
+    toast("Repo Radar", f"v{v} indiriliyor, panel birkaç saniye içinde kendini yenileyecek.")
+    apply_update()
+
+
+def update_watcher():
+    """Açılışta ve sonra saatte bir yeni sürüme bakar; bulunca bir kez bildirim gösterir."""
+    told = None
+    while True:
+        check_update()
+        v = newer_version()
+        if v and v != told and config().get("notify", True):
+            toast("Repo Radar", f"Yeni sürüm var: v{v}. Tepsi simgesi > Güncellemeleri denetle ile kur.")
+            told = v
+        time.sleep(3600)
+
+
 def apply_update():
     try: _apply_update()
     except Exception as e: err(f"Güncelleme indirilemedi: {e}")
@@ -673,9 +705,8 @@ class Handler(BaseHTTPRequestHandler):
             d["notes"] = load_json(os.path.join(BASE, "notes.json"), {}).get("notes", {})
             d["status"] = status
             d["has_token"] = bool(get_token())
-            if time.time() - _upd["checked"] > 3600: threading.Thread(target=check_update, daemon=True).start()
             d["version"] = local_version()
-            d["update"] = _upd["latest"] if _upd["latest"] and vtuple(_upd["latest"]) > vtuple(local_version()) else None
+            d["update"] = newer_version()
             d["projects"] = load_json(PROJECTS, {})
             d["errors"] = _errors
             return self.send(200, json.dumps(d, ensure_ascii=False), "application/json; charset=utf-8")
@@ -695,7 +726,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, json.dumps(notes_get(repo, force="force" in qs), ensure_ascii=False),
                              "application/json; charset=utf-8")
         if self.path == "/api/status":
-            return self.send(200, json.dumps({**status, "errors": _errors}, ensure_ascii=False), "application/json; charset=utf-8")
+            return self.send(200, json.dumps({**status, "errors": _errors, "version": local_version(), "update": newer_version()}, ensure_ascii=False), "application/json; charset=utf-8")
         self.send(404, "yok", "text/plain")
 
     def do_POST(self):
@@ -814,6 +845,7 @@ def run_tray(port, server):
     menu = pystray.Menu(
         pystray.MenuItem("Repo Radar'ı aç", lambda i, it: open_window(port), default=True),
         pystray.MenuItem("Şimdi yenile", lambda i, it: threading.Thread(target=refresh, daemon=True).start()),
+        pystray.MenuItem("Güncellemeleri denetle", lambda i, it: threading.Thread(target=update_now, daemon=True).start()),
         pystray.MenuItem("Çıkış", quit_app))
     pystray.Icon("RepoRadar", img, "Repo Radar", menu).run()
     return True
@@ -852,6 +884,7 @@ def main():
         log("Boş port bulunamadı"); return
     threading.Thread(target=scheduler, daemon=True).start()
     threading.Thread(target=project_watcher, daemon=True).start()
+    threading.Thread(target=update_watcher, daemon=True).start()
     if "--no-open" not in sys.argv:
         threading.Timer(0.8, open_window, args=[port]).start()
     log(f"Repo Radar çalışıyor: http://127.0.0.1:{port}/")
