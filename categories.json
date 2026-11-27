@@ -41,6 +41,15 @@
    ]
   },
   {
+   "id": "skills",
+   "name": "Claude skill'leri",
+   "queries": [
+    "topic:claude-skills",
+    "topic:agent-skills",
+    "topic:claude-code-skills"
+   ]
+  },
+  {
    "id": "mobil",
    "name": "Mobil uygulama",
    "queries": [

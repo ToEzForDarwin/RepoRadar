@@ -265,7 +265,8 @@ def project_add(body):
     repo = re.sub(r"^(https?://)?(www\.)?github\.com/", "", repo)
     if repo.endswith(".git"): repo = repo[:-4]
     if repo:
-        if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo): return False, "Repo 'sahip/repo' biçiminde olmalı."
+        if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo) or any(x.strip(".") == "" for x in repo.split("/")):
+            return False, "Repo 'sahip/repo' biçiminde olmalı."
         token = get_token()
         try:
             info = gh_get(f"/repos/{repo}", token) if token else json.load(urllib.request.urlopen(urllib.request.Request(
@@ -297,6 +298,79 @@ def project_remove(body):
     pj["projects"].pop(i)
     save_json(PROJECTS, pj)
     return True, ""
+
+
+SKILL_CATEGORY = {"id": "skills", "name": "Claude skill'leri",
+                  "queries": ["topic:claude-skills", "topic:agent-skills", "topic:claude-code-skills"]}
+MIGRATIONS = os.path.join(DATA, "migrations.json")
+
+
+def migrate():
+    """categories.json kullanıcının dosyası, güncellemede ezilmez. Yeni varsayılanları bir kez ekle."""
+    done = load_json(MIGRATIONS, {})
+    if done.get("skills_category"): return
+    path = os.path.join(BASE, "categories.json")
+    cfg = load_json(path, None)
+    if cfg is None: return
+    cats = cfg.setdefault("categories", [])
+    if not any(c.get("id") == "skills" for c in cats):
+        i = next((k + 1 for k, c in enumerate(cats) if c.get("id") == "ai"), len(cats))
+        cats.insert(i, dict(SKILL_CATEGORY))
+        with open(path, "w", encoding="utf-8") as f: json.dump(cfg, f, ensure_ascii=False, indent=1)
+        log("Claude skill'leri kategorisi eklendi")
+    done["skills_category"] = True
+    save_json(MIGRATIONS, done)
+
+
+SCANS = os.path.join(DATA, "scans.json")
+_scan_lock = threading.Lock()
+
+
+def gh_any(path):
+    token = get_token()
+    if token: return gh_get(path, token)
+    with urllib.request.urlopen(urllib.request.Request("https://api.github.com" + path, headers={
+            "Accept": "application/vnd.github+json", "User-Agent": "repo-radar"}), timeout=30) as r:
+        return json.load(r)
+
+
+def scan_repo(repo):
+    """Reponun dosya ağacına bakarak skill olup olmadığını ve risk işaretlerini çıkarır. İçerik çalıştırmaz."""
+    import base64, re
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo) or any(x.strip(".") == "" for x in repo.split("/")):
+        return {"error": "Geçersiz repo"}
+    with _scan_lock:
+        cache = load_json(SCANS, {})
+        c = cache.get(repo.lower())
+        if c and time.time() - c.get("at", 0) < 7 * 86400: return c
+    try:
+        info = gh_any(f"/repos/{repo}")
+        tree = gh_any(f"/repos/{repo}/git/trees/{urllib.parse.quote(info['default_branch'])}?recursive=1")
+    except urllib.error.HTTPError as e:
+        return {"error": f"Repo okunamadı (GitHub {e.code})"}
+    except Exception:
+        return {"error": "GitHub'a ulaşılamadı"}
+    if not isinstance(tree, dict): tree = {}
+    paths = [t["path"] for t in tree.get("tree", []) if t.get("type") == "blob"]
+    low = [p.lower() for p in paths]
+    skills = [p.rsplit("/", 1)[0] if "/" in p else "." for p in paths if p.endswith("SKILL.md")]
+    out = {"at": time.time(), "repo": info.get("full_name", repo), "skills": len(skills), "skill_dirs": skills[:6],
+           "hooks": any(p.endswith("hooks.json") or "/hooks/" in p and p.endswith((".sh", ".js", ".mjs", ".py")) for p in low),
+           "mcp": any(p.endswith(".mcp.json") or p == "mcp.json" for p in low),
+           "install_script": [p for p in paths if "/" not in p and p.lower().startswith("install") and p.endswith((".sh", ".ps1"))],
+           "npm": "package.json" in low, "truncated": tree.get("truncated", False), "plugins": [], "marketplace": ""}
+    if ".claude-plugin/marketplace.json" in paths:
+        try:
+            m = json.loads(base64.b64decode(gh_any(f"/repos/{repo}/contents/.claude-plugin/marketplace.json")["content"]))
+            out["marketplace"] = str(m.get("name", ""))[:80]
+            out["plugins"] = [str(p.get("name", ""))[:80] for p in m.get("plugins", []) if p.get("name")][:6]
+        except Exception:
+            out["marketplace"] = "?"
+    with _scan_lock:
+        cache = load_json(SCANS, {})
+        cache[repo.lower()] = out
+        save_json(SCANS, cache)
+    return out
 
 
 NOTES_TITLE = "📝 Proje notları"
@@ -608,6 +682,10 @@ class Handler(BaseHTTPRequestHandler):
                                               "at": datetime.fromtimestamp(_live["at"]).isoformat(timespec="seconds"),
                                               "errors": _errors},
                                              ensure_ascii=False), "application/json; charset=utf-8")
+        if self.path.startswith("/api/scan?"):
+            qs = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+            return self.send(200, json.dumps(scan_repo((qs.get("repo") or [""])[0]), ensure_ascii=False),
+                             "application/json; charset=utf-8")
         if self.path.startswith("/api/notes?"):
             qs = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
             repo = project_repos().get((qs.get("repo") or [""])[0].lower())
@@ -751,6 +829,8 @@ def is_ours(port):
 def main():
     cfg = config()
     base_port = int(cfg.get("port", 8765))
+    try: migrate()
+    except Exception as e: err(f"Ayar güncellemesi yapılamadı: {e}")
     if "--once" in sys.argv:
         refresh(); return
     if "--after-update" in sys.argv:
