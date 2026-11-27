@@ -237,7 +237,7 @@ def vtuple(v):
 
 
 def check_update():
-    repo, token = config().get("update_repo"), get_token()
+    repo, token = config().get("update_repo", "ToEzForDarwin/RepoRadar"), get_token()
     if not repo or not token: return None
     try:
         d = gh_get(f"/repos/{repo}/contents/VERSION", token)
@@ -252,7 +252,7 @@ def check_update():
 
 def apply_update():
     import zipfile, io
-    repo, token = config().get("update_repo"), get_token()
+    repo, token = config().get("update_repo", "ToEzForDarwin/RepoRadar"), get_token()
     req = urllib.request.Request(f"https://api.github.com/repos/{repo}/zipball", headers={
         "User-Agent": "repo-radar", "Authorization": "Bearer " + token})
     with urllib.request.urlopen(req, timeout=60) as r:
