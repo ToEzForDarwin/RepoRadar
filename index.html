@@ -355,7 +355,11 @@ function showStatus(st){
 }
 async function load(){
   DATA=await (await fetch('/api/data')).json();nav();if(!(cur==='proj'&&(adding||editing>=0)))render();showStatus(DATA.status);showErrors(DATA.errors);
-  const u=$('#upd');u.hidden=!DATA.update;if(DATA.update)$('#updbtn').textContent='⬆ Güncelleme var: v'+DATA.version+' → v'+DATA.update;
+  showUpd(DATA.version,DATA.update);
+}
+function showUpd(ver,upd){
+  if(DATA&&DATA.version&&ver&&ver!==DATA.version){location.reload();return;}  // uygulama güncellendi: sayfayı yenile
+  const u=$('#upd');u.hidden=!upd;if(upd&&!$('#updbtn').disabled)$('#updbtn').textContent='⬆ Güncelleme var: v'+ver+' → v'+upd;
 }
 let ERRS=[],errOpen=false;
 function showErrors(list){
@@ -369,7 +373,7 @@ function showErrors(list){
   if(errOpen)ERRS.slice().reverse().forEach(e=>b.append(el('div','eitem',new Date(e.at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+(e.n>1?' (×'+e.n+')':'')+' · '+e.msg)));
   else b.append(el('div','eitem',last.msg));
 }
-setInterval(async()=>{try{showErrors((await (await fetch('/api/status')).json()).errors);}catch(e){}},60000);
+setInterval(async()=>{try{const st=await (await fetch('/api/status')).json();showErrors(st.errors);showUpd(st.version,st.update);}catch(e){}},20000);
 let poll=null;
 async function watch(){
   clearInterval(poll);
