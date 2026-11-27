@@ -34,6 +34,29 @@ def log(msg):
         except Exception: pass
 
 
+_errors = []  # panelde gösterilen son hatalar: {"at", "msg", "n"}
+
+
+def err(msg):
+    """Hatayı log'a yazar ve panelde gösterilmek üzere saklar."""
+    log(msg)
+    short = str(msg).strip().splitlines()[-1][:300] if str(msg).strip() else "Bilinmeyen hata"
+    now = datetime.now().isoformat(timespec="seconds")
+    for e in _errors:
+        if e["msg"] == short:
+            e.update(at=now, n=e["n"] + 1); return
+    _errors.append({"at": now, "msg": short, "n": 1})
+    del _errors[:-20]
+
+
+def _thread_hook(a):
+    import traceback
+    err("Beklenmeyen hata: " + "".join(traceback.format_exception(a.exc_type, a.exc_value, a.exc_traceback)))
+
+
+threading.excepthook = _thread_hook
+
+
 def load_json(path, default):
     try:
         with open(path, encoding="utf-8") as f:
@@ -69,6 +92,15 @@ def get_token():
 def gh_get(path, token):
     req = urllib.request.Request("https://api.github.com" + path, headers={
         "Accept": "application/vnd.github+json", "User-Agent": "repo-radar", "Authorization": "Bearer " + token})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.load(r)
+
+
+def gh_send(method, path, token, body):
+    req = urllib.request.Request("https://api.github.com" + path, method=method,
+        data=json.dumps(body).encode("utf-8"), headers={
+        "Accept": "application/vnd.github+json", "User-Agent": "repo-radar", "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.load(r)
 
@@ -165,6 +197,10 @@ def repo_live(repo, token):
     except urllib.error.HTTPError as e:
         out["error"] = "Repo görülemiyor (gizliyse token gerekli)" if e.code in (401, 403, 404) else f"GitHub hatası {e.code}"
         return out
+    except Exception as e:
+        err(f"{repo} durumu alınamadı: {e}")
+        out["error"] = "GitHub'a ulaşılamadı"
+        return out
     out.update(pushed=info.get("pushed_at"), private=info.get("private"), branch=info.get("default_branch"))
     def safe(path):
         try: return gh_get(path, token) if token else None
@@ -182,7 +218,7 @@ def repo_live(repo, token):
     prs = safe(f"/repos/{repo}/pulls?state=open&per_page=100")
     if prs is not None: out["prs"] = len(prs)
     iss = safe(f"/repos/{repo}/issues?state=open&per_page=100")
-    if iss is not None: out["issues"] = len([i for i in iss if "pull_request" not in i])
+    if iss is not None: out["issues"] = len([i for i in iss if "pull_request" not in i and i.get("title") != NOTES_TITLE])
     ms = safe(f"/repos/{repo}/milestones?state=open&sort=due_on&per_page=1")
     if ms:
         m = ms[0]; tot = m["open_issues"] + m["closed_issues"]
@@ -217,8 +253,126 @@ def projects_live(force=False):
 def project_watcher():
     while True:
         try: projects_live(force=True)
-        except Exception as e: log(f"Proje durumu alınamadı: {e}")
+        except Exception as e: err(f"Proje durumu alınamadı: {e}")
         time.sleep(300)
+
+
+def project_add(body):
+    import re
+    name = str(body.get("name", "")).strip()[:120]
+    if not name: return False, "Proje adı boş olamaz."
+    repo = str(body.get("repo", "")).strip().rstrip("/")
+    repo = re.sub(r"^(https?://)?(www\.)?github\.com/", "", repo)
+    if repo.endswith(".git"): repo = repo[:-4]
+    if repo:
+        if not re.fullmatch(r"[\w.-]+/[\w.-]+", repo): return False, "Repo 'sahip/repo' biçiminde olmalı."
+        token = get_token()
+        try:
+            info = gh_get(f"/repos/{repo}", token) if token else json.load(urllib.request.urlopen(urllib.request.Request(
+                f"https://api.github.com/repos/{repo}", headers={"User-Agent": "repo-radar"}), timeout=30))
+            repo = info.get("full_name", repo)
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403, 404):
+                return False, "Repo bulunamadı" + ("" if token else " (gizliyse önce token ekle)") + "."
+            return False, f"GitHub hatası {e.code}"
+        except Exception:
+            return False, "GitHub'a ulaşılamadı."
+    pj = load_json(PROJECTS, {"projects": []})
+    pj.setdefault("projects", [])
+    if repo and any(repo.lower() in (r.lower() for r in p.get("repos", [])) for p in pj["projects"]):
+        return False, "Bu repo zaten bir projede var."
+    pj["projects"].append({"name": name, "status": "Aktif", "progress": 0,
+                           "summary": str(body.get("summary", "")).strip()[:500], "next": "",
+                           "links": [], "threads": [], "repos": [repo] if repo else []})
+    save_json(PROJECTS, pj)
+    _live["at"] = 0
+    return True, ""
+
+
+def project_remove(body):
+    pj = load_json(PROJECTS, {"projects": []})
+    i = body.get("index")
+    if not isinstance(i, int) or not 0 <= i < len(pj.get("projects", [])): return False, "Proje bulunamadı."
+    if pj["projects"][i].get("name") != body.get("name"): return False, "Liste değişmiş, sayfayı yenile."
+    pj["projects"].pop(i)
+    save_json(PROJECTS, pj)
+    return True, ""
+
+
+NOTES_TITLE = "📝 Proje notları"
+NOTES_IDX = os.path.join(DATA, "notes_issues.json")  # repo -> issue numarası
+_notes = {}  # repo -> {"at": zaman, "data": ...}
+_notes_lock = threading.Lock()
+
+
+def project_repos():
+    return {r.lower(): r for pr in load_json(PROJECTS, {}).get("projects", []) for r in pr.get("repos", [])}
+
+
+def notes_issue(repo, token, create=False):
+    """Reponun not issue'sunu bulur (gerekirse açar). Yoksa None."""
+    idx = load_json(NOTES_IDX, {})
+    n = idx.get(repo)
+    if n:
+        try:
+            it = gh_get(f"/repos/{repo}/issues/{n}", token)
+            if it.get("title") == NOTES_TITLE and it.get("state") == "open": return it
+        except urllib.error.HTTPError as e:
+            if e.code not in (404, 410): raise
+    for page in range(1, 4):
+        items = gh_get(f"/repos/{repo}/issues?state=open&per_page=100&page={page}", token)
+        hit = next((i for i in items if i.get("title") == NOTES_TITLE and "pull_request" not in i), None)
+        if hit or len(items) < 100: break
+    if not hit and create:
+        hit = gh_send("POST", f"/repos/{repo}/issues", token, {"title": NOTES_TITLE,
+            "body": "Repo Radar proje notları. Her yorum bir not. Bu issue'yu kapatma; panel notları buradan okur."})
+    if hit:
+        idx[repo] = hit["number"]; save_json(NOTES_IDX, idx)
+    return hit
+
+
+def notes_get(repo, force=False):
+    with _notes_lock:
+        c = _notes.get(repo)
+        if c and not force and time.time() - c["at"] < 120: return c["data"]
+    token = get_token()
+    if not token: return {"error": "Notlar için Benim repolarım sekmesinden token ekle."}
+    try:
+        it = notes_issue(repo, token)
+        out = {"issue": None, "notes": []}
+        if it:
+            out["issue"] = {"number": it["number"], "url": it["html_url"]}
+            cnt = it.get("comments", 0)
+            last = max(1, -(-cnt // 100))
+            cm = gh_get(f"/repos/{repo}/issues/{it['number']}/comments?per_page=100&page={last}", token) if cnt else []
+            if len(cm) < 5 and last > 1:
+                cm = gh_get(f"/repos/{repo}/issues/{it['number']}/comments?per_page=100&page={last - 1}", token) + cm
+            out["notes"] = [{"text": (x.get("body") or "")[:2000], "date": x.get("created_at"), "url": x.get("html_url"),
+                             "author": (x.get("user") or {}).get("login", "")} for x in reversed(cm[-5:])]
+            out["count"] = cnt
+    except urllib.error.HTTPError as e:
+        out = {"error": f"Notlar alınamadı (GitHub {e.code})"}
+    except Exception as e:
+        out = {"error": "Notlar alınamadı (bağlantı)"}
+    with _notes_lock:
+        _notes[repo] = {"at": time.time(), "data": out}
+    return out
+
+
+def notes_add(repo, text):
+    token = get_token()
+    if not token: return False, "Önce token ekle."
+    try:
+        it = notes_issue(repo, token, create=True)
+        gh_send("POST", f"/repos/{repo}/issues/{it['number']}/comments", token, {"body": text})
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403, 404):
+            return False, "Token'ın yazma izni yok. GitHub'da token ayarından Issues iznini 'Read and write' yap."
+        return False, f"GitHub hatası {e.code}"
+    except Exception:
+        return False, "GitHub'a ulaşılamadı."
+    notes_get(repo, force=True)
+    return True, ""
 
 
 KEEP = {"categories.json", "projects.json"}  # kullanıcının dosyaları: güncellemede ezilmez
@@ -246,11 +400,16 @@ def check_update():
         _upd.update(latest=v, checked=time.time())
         return v
     except Exception as e:
-        log(f"Güncelleme kontrolü başarısız: {e}")
+        err(f"Güncelleme kontrolü başarısız: {e}")
         return None
 
 
 def apply_update():
+    try: _apply_update()
+    except Exception as e: err(f"Güncelleme indirilemedi: {e}")
+
+
+def _apply_update():
     import zipfile, io
     repo, token = config().get("update_repo", "ToEzForDarwin/RepoRadar"), get_token()
     req = urllib.request.Request(f"https://api.github.com/repos/{repo}/zipball", headers={
@@ -312,7 +471,7 @@ def refresh():
             cats_out.append({"id": c["id"], "name": c["name"], "rows": rows})
         if not any(c["rows"] for c in cats_out):
             status["message"] = "Güncelleme başarısız (internet veya GitHub sınırı). Eski veri gösteriliyor."
-            log(status["message"])
+            err(status["message"])
             return False
         # geçmiş ve 7 günlük değişim
         cutoff = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
@@ -355,7 +514,7 @@ def refresh():
                     g = max(gained, key=lambda r: r["delta_prev"])
                     toast("Repo Radar", f"Repon {g['repo']} +{g['delta_prev']} yıldız aldı (★ {g['stars']:,})")
             except Exception as e:
-                log(f"Kendi repoların alınamadı: {e}")
+                err(f"Kendi repoların alınamadı: {e}")
                 mine = prev.get("mine")
         out = {"updated": datetime.now().isoformat(timespec="seconds"), "categories": cats_out, "mine": mine}
         save_json(LATEST, out)
@@ -387,7 +546,7 @@ def toast(title, text):
         subprocess.run(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps],
                        timeout=30, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except Exception as e:
-        log(f"Bildirim gösterilemedi: {e}")
+        err(f"Bildirim gösterilemedi: {e}")
 
 
 def scheduler():
@@ -397,7 +556,7 @@ def scheduler():
         age = (datetime.now() - datetime.fromisoformat(last)).total_seconds() / 3600 if last else 1e9
         if age >= hours:
             try: refresh()
-            except Exception as e: log(f"Güncelleme hatası: {e}")
+            except Exception as e: err(f"Güncelleme hatası: {e}")
         time.sleep(300)
 
 
@@ -424,6 +583,7 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             import traceback
             log("Sayfa hatası " + self.path + ": " + traceback.format_exc())
+            err("Sayfa hatası " + self.path.split("?")[0] + ": " + traceback.format_exc().strip().splitlines()[-1])
             try: self.send(500, "Repo Radar hata verdi. Ayrıntı: data\\radar.log", "text/plain; charset=utf-8")
             except Exception: pass
 
@@ -441,13 +601,21 @@ class Handler(BaseHTTPRequestHandler):
             d["version"] = local_version()
             d["update"] = _upd["latest"] if _upd["latest"] and vtuple(_upd["latest"]) > vtuple(local_version()) else None
             d["projects"] = load_json(PROJECTS, {})
+            d["errors"] = _errors
             return self.send(200, json.dumps(d, ensure_ascii=False), "application/json; charset=utf-8")
         if self.path.startswith("/api/projects"):
             return self.send(200, json.dumps({"live": projects_live(force="force" in self.path),
-                                              "at": datetime.fromtimestamp(_live["at"]).isoformat(timespec="seconds")},
+                                              "at": datetime.fromtimestamp(_live["at"]).isoformat(timespec="seconds"),
+                                              "errors": _errors},
                                              ensure_ascii=False), "application/json; charset=utf-8")
+        if self.path.startswith("/api/notes?"):
+            qs = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+            repo = project_repos().get((qs.get("repo") or [""])[0].lower())
+            if not repo: return self.send(404, "{}", "application/json")
+            return self.send(200, json.dumps(notes_get(repo, force="force" in qs), ensure_ascii=False),
+                             "application/json; charset=utf-8")
         if self.path == "/api/status":
-            return self.send(200, json.dumps(status, ensure_ascii=False), "application/json; charset=utf-8")
+            return self.send(200, json.dumps({**status, "errors": _errors}, ensure_ascii=False), "application/json; charset=utf-8")
         self.send(404, "yok", "text/plain")
 
     def do_POST(self):
@@ -484,6 +652,24 @@ class Handler(BaseHTTPRequestHandler):
                     pj["projects"][i][k] = v
             save_json(PROJECTS, pj)
             return self.send(200, json.dumps({"ok": True}), "application/json")
+        if self.path in ("/api/project-add", "/api/project-remove") and self.headers.get("X-Radar") == "1":
+            n = int(self.headers.get("Content-Length") or 0)
+            body = json.loads(self.rfile.read(min(n, 20000)) or b"{}")
+            ok, msg = (project_add if self.path.endswith("add") else project_remove)(body)
+            return self.send(200 if ok else 400, json.dumps({"ok": ok, "error": msg}, ensure_ascii=False),
+                             "application/json; charset=utf-8")
+        if self.path == "/api/errors-clear" and self.headers.get("X-Radar") == "1":
+            _errors.clear()
+            return self.send(200, "{}", "application/json")
+        if self.path == "/api/note" and self.headers.get("X-Radar") == "1":
+            n = int(self.headers.get("Content-Length") or 0)
+            body = json.loads(self.rfile.read(min(n, 20000)) or b"{}")
+            repo = project_repos().get(str(body.get("repo", "")).lower())
+            text = str(body.get("text", "")).strip()[:5000]
+            if not repo or not text: return self.send(400, "{}", "application/json")
+            ok, err = notes_add(repo, text)
+            return self.send(200 if ok else 400, json.dumps({"ok": ok, "error": err}, ensure_ascii=False),
+                             "application/json; charset=utf-8")
         if self.path == "/api/update" and self.headers.get("X-Radar") == "1":
             self.send(202, "{}", "application/json")
             threading.Timer(0.5, apply_update).start()

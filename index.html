@@ -67,6 +67,14 @@ main{padding:10px 12px 20px}
 .mini div{background:var(--chip);border-radius:8px;padding:4px 6px;text-align:center;font-size:11px;color:var(--muted)}.mini b{display:block;font-size:15px;color:var(--fg)}
 .edit{display:flex;flex-direction:column;gap:6px}.edit textarea{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px;font:inherit;font-size:12px;min-height:50px}
 .erow{display:flex;gap:6px;align-items:center}
+.notes{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px}
+.nitem{border-left:3px solid var(--accent);padding:4px 8px;background:var(--chip);border-radius:0 8px 8px 0;font-size:12px;white-space:pre-wrap;word-break:break-word}
+.nitem small{display:block;color:var(--muted);font-size:10px}
+.nadd{display:flex;gap:6px}.nadd textarea{flex:1;min-width:0;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:5px;font:inherit;font-size:12px;min-height:32px;resize:vertical}
+.errs{margin-top:6px;border:1px solid #d9822b;background:rgba(217,130,43,.12);border-radius:8px;padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:4px}
+.errs[hidden]{display:none}
+.errs .erow{display:flex;gap:8px;align-items:center}.errs .erow b{flex:1}
+.errs .eitem{color:var(--muted);font-size:11px;word-break:break-word}
 .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
 .cat-h{grid-column:1/-1;margin:6px 0 0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 </style></head>
@@ -75,6 +83,7 @@ main{padding:10px 12px 20px}
  <div class="hrow"><h1>📡 Repo Radar</h1><button class="icon" id="ref" title="Şimdi yenile">⟳</button></div>
  <div class="status" id="status"></div>
  <div id="upd" hidden style="margin-top:6px"><button class="btn" id="updbtn">Güncelleme var</button></div>
+ <div id="errs" class="errs" hidden></div>
  <div class="kpis">
   <div class="kpi" id="k-new"><span>Yeni giren</span><b>—</b><small>son güncellemede</small></div>
   <div class="kpi" id="k-fast"><span>En hızlı yükselen</span><b>—</b><small></small></div>
@@ -153,8 +162,9 @@ function render(){
   }
   const g=$('#grid');g.replaceChildren();
   if(v.projects){
-    if(!v.rows.length){g.append(el('div','empty','projects.json boş.'));return;}
+    if(!v.rows.length)g.append(el('div','empty','Henüz proje yok.'));
     v.rows.forEach((pr,i)=>g.append(projCard(pr,i)));
+    g.append(addProject());
     g.append(el('div','status',LIVE?'GitHub durumu: '+new Date(LIVE.at).toLocaleTimeString('tr-TR')+' (2 dakikada bir yenilenir)':'GitHub durumu yükleniyor...'));
     if(!LIVE)loadLive();
     return;
@@ -172,9 +182,10 @@ const ST={'calisiyor':['ok','Çalışıyor'],'seni-bekliyor':['warn','Seni bekli
 const safe=u=>/^https:\/\//.test(u||'');
 async function loadLive(force){
   try{LIVE=await (await fetch('/api/projects'+(force?'?force':''))).json();}catch(e){return;}
-  if(cur==='proj'&&editing<0)render();
+  showErrors(LIVE.errors);
+  if(cur==='proj'&&editing<0&&!typing())render();
 }
-setInterval(()=>{if(cur==='proj')loadLive(true);},120000);
+setInterval(()=>{if(cur==='proj'){loadLive(true);Object.keys(NOTES).forEach(r=>loadNotes(r));}},120000);
 const BUILD={success:['ok','✅ Başarılı'],failure:['bad','❌ Başarısız'],cancelled:['warn','İptal'],timed_out:['bad','Zaman aşımı']};
 function liveBox(repo){
   const d=LIVE&&LIVE.live&&LIVE.live[repo];const b=el('div','live');
@@ -187,6 +198,31 @@ function liveBox(repo){
   const m=el('div','mini');
   [['Açık issue',d.issues],['Açık PR',d.prs],['Milestone',d.milestone?d.milestone.done+'/'+d.milestone.total:'—']].forEach(([k,v])=>{const x=el('div');x.append(el('b',null,v==null?'—':String(v)),document.createTextNode(k));m.append(x);});
   b.append(m);return b;
+}
+const NOTES={};
+async function loadNotes(repo,force){
+  NOTES[repo]=NOTES[repo]||{loading:true};
+  try{NOTES[repo]=await (await fetch('/api/notes?repo='+encodeURIComponent(repo)+(force?'&force=1':''))).json();}catch(e){NOTES[repo]={error:'Notlar alınamadı'};}
+  if(cur==='proj'&&editing<0&&!typing())render();
+}
+const typing=()=>{if(adding)return true;const a=document.activeElement;return a&&a.closest&&a.closest('.notes')&&a.value;};
+function notesBox(repo){
+  const b=el('div','notes');const d=NOTES[repo];
+  const h=el('div','lrow');h.append(el('span','plbl','📝 Notlar'+(d&&d.count?' ('+d.count+')':'')));
+  if(d&&d.issue&&safe(d.issue.url)){const a=el('a','lk','tümü ↗');a.href=d.issue.url;a.target='_blank';a.rel='noopener';h.append(a);}
+  b.append(h);
+  if(!d){loadNotes(repo);b.append(el('span','lk','Yükleniyor...'));}
+  else if(d.loading)b.append(el('span','lk','Yükleniyor...'));
+  else if(d.error)b.append(el('span','chip warn',d.error));
+  else if(!d.notes.length)b.append(el('span','lk','Henüz not yok. İlk notta repoda "Proje notları" issue\'su açılır.'));
+  else d.notes.forEach(n=>{const x=el('div','nitem');x.append(el('small',null,new Date(n.date).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · '+n.author),document.createTextNode(n.text));b.append(x);});
+  const f=el('div','nadd');const t=el('textarea');t.placeholder='Not yaz, Ctrl+Enter ile kaydet';
+  const s=el('button','btn','Ekle');const msg=el('span','lk');
+  const send=async()=>{const v=t.value.trim();if(!v)return;s.disabled=true;msg.textContent='Gönderiliyor...';
+    let r;try{r=await (await fetch('/api/note',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({repo,text:v})})).json();}catch(e){r={ok:false,error:'Uygulamaya ulaşılamadı'};}
+    s.disabled=false;if(r.ok){t.value='';t.blur();msg.textContent='';loadNotes(repo);}else{msg.textContent=r.error||'Olmadı';msg.className='lk err';}};
+  s.onclick=send;t.onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send();}};
+  f.append(t,s);b.append(f,msg);return b;
 }
 function projCard(pr,idx){
   const c=el('div','proj');
@@ -202,13 +238,17 @@ function projCard(pr,idx){
     const sv=el('button',null,'Kaydet');sv.className='btn';const cn=el('button','linkbtn','vazgeç');
     sv.onclick=async()=>{await fetch('/api/project-edit',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({index:idx,status:st.value,progress:pg.value,next:nx.value})});editing=-1;load();};
     cn.onclick=()=>{editing=-1;render();};
+    const rm=el('button','linkbtn','projeyi kaldır');rm.style.marginLeft='auto';
+    rm.onclick=async()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='emin misin? tekrar bas (notlar GitHub\'da kalır)';rm.style.color='#d9534f';return;}
+      const r=await (await fetch('/api/project-remove',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({index:idx,name:pr.name})})).json();
+      if(!r.ok){rm.textContent=r.error||'Olmadı';return;}editing=-1;load();};
     const r1=el('div','erow');r1.append(el('span','plbl','Durum'),st,el('span','plbl','İlerleme %'),pg);
-    f.append(r1,el('span','plbl','Sıradaki adım'),nx,(()=>{const r=el('div','erow');r.append(sv,cn);return r;})());c.append(f);
+    f.append(r1,el('span','plbl','Sıradaki adım'),nx,(()=>{const r=el('div','erow');r.append(sv,cn,rm);return r;})());c.append(f);
   } else {
     if(pr.next){c.append(el('span','plbl','Sıradaki adım'),el('div',null,pr.next));}
     const e=el('button','linkbtn','düzenle');e.onclick=()=>{editing=idx;render();};c.append(e);
   }
-  (pr.repos||[]).forEach(r=>c.append(liveBox(r)));
+  (pr.repos||[]).forEach(r=>c.append(liveBox(r),notesBox(r)));
   if((pr.threads||[]).length){
     c.append(el('span','plbl','Claude threadleri'));const tl=el('div','tlist');
     pr.threads.forEach(t=>{const a=el('a');if(safe(t.url)){a.href=t.url;a.target='_blank';a.rel='noopener';}a.append(el('span',null,t.title),el('span','lk','↗'));tl.append(a);});
@@ -217,12 +257,29 @@ function projCard(pr,idx){
   if((pr.links||[]).length){const l=el('div','links');pr.links.forEach(k=>{if(!safe(k.url))return;const a=el('a',null,k.title);a.href=k.url;a.target='_blank';a.rel='noopener';l.append(a);});c.append(el('span','plbl','Bağlantılar'),l);}
   return c;
 }
+let adding=false;
+function addProject(){
+  if(!adding){const b=el('button','linkbtn','+ Proje ekle');b.style.gridColumn='1/-1';b.onclick=()=>{adding=true;render();};return b;}
+  const c=el('div','proj');c.append(el('h3',null,'Yeni proje'));
+  const f=el('div','edit');
+  const nm=el('input');nm.placeholder='Proje adı';
+  const rp=el('input');rp.placeholder='GitHub repo: sahip/repo veya bağlantısı (boş bırakılabilir)';
+  const sm=el('textarea');sm.placeholder='Kısa özet (isteğe bağlı)';
+  const msg=el('span','lk');
+  const sv=el('button','btn','Ekle');const cn=el('button','linkbtn','vazgeç');
+  sv.onclick=async()=>{sv.disabled=true;msg.textContent='Kontrol ediliyor...';msg.className='lk';
+    let r;try{r=await (await fetch('/api/project-add',{method:'POST',headers:{'X-Radar':'1','Content-Type':'application/json'},body:JSON.stringify({name:nm.value,repo:rp.value,summary:sm.value})})).json();}catch(e){r={ok:false,error:'Uygulamaya ulaşılamadı'};}
+    sv.disabled=false;if(r.ok){adding=false;LIVE=null;load();}else{msg.textContent=r.error||'Olmadı';msg.className='lk err';}};
+  cn.onclick=()=>{adding=false;render();};
+  const r=el('div','erow');r.append(sv,cn);
+  f.append(nm,rp,sm,r,msg);c.append(f);setTimeout(()=>nm.focus(),0);return c;
+}
 function connectPanel(){
   const c=el('div','connect');
   c.append(el('b',null,'GitHub hesabını bağla'),el('span',null,'Kendi repolarını (gizliler dahil) burada görmek için salt okunur bir token gerekiyor. Token sadece bu bilgisayarda, uygulamanın data klasöründe saklanır.'));
   const ol=el('ol');
   const li1=el('li');const a=el('a',null,'Bu sayfayı aç');a.href='https://github.com/settings/personal-access-tokens/new';a.target='_blank';li1.append(a,document.createTextNode(' (Fine-grained token).'));
-  ol.append(li1,el('li',null,'Repository access: "All repositories". Permissions: Actions, Contents, Issues, Pull requests için "Read-only" seç (Metadata otomatik gelir). Yazma izni verme.'),el('li',null,'Generate token de, çıkan kodu aşağıya yapıştır.'));
+  ol.append(li1,el('li',null,'Repository access: "All repositories". Permissions: Actions, Contents, Pull requests için "Read-only" seç (Metadata otomatik gelir). Proje notu yazabilmek için sadece Issues "Read and write" olsun.'),el('li',null,'Generate token de, çıkan kodu aşağıya yapıştır.'));
   const row=el('div','row');const inp=el('input');inp.type='password';inp.placeholder='github_pat_...';const b=el('button',null,'Bağla');
   const msg=el('span');b.onclick=async()=>{b.disabled=true;msg.textContent='Kontrol ediliyor...';msg.className='';const r=await saveToken(inp.value);b.disabled=false;if(!r.ok){msg.textContent=r.error||'Olmadı';msg.className='err';}};
   row.append(inp,b);c.append(ol,row,msg);return c;
@@ -238,13 +295,26 @@ function showStatus(st){
   $('#ref').disabled=!!(st&&st.running);
 }
 async function load(){
-  DATA=await (await fetch('/api/data')).json();nav();render();showStatus(DATA.status);
+  DATA=await (await fetch('/api/data')).json();nav();if(!(cur==='proj'&&(adding||editing>=0)))render();showStatus(DATA.status);showErrors(DATA.errors);
   const u=$('#upd');u.hidden=!DATA.update;if(DATA.update)$('#updbtn').textContent='⬆ Güncelleme var: v'+DATA.version+' → v'+DATA.update;
 }
+let ERRS=[],errOpen=false;
+function showErrors(list){
+  ERRS=list||[];const b=$('#errs');b.hidden=!ERRS.length;if(!ERRS.length)return;
+  b.replaceChildren();const r=el('div','erow');
+  const last=ERRS[ERRS.length-1];
+  r.append(el('b',null,'⚠ '+ERRS.length+' sorun · son: '+new Date(last.at).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})));
+  const t=el('button','linkbtn',errOpen?'gizle':'göster');t.onclick=()=>{errOpen=!errOpen;showErrors(ERRS);};
+  const c=el('button','linkbtn','temizle');c.onclick=async()=>{await fetch('/api/errors-clear',{method:'POST',headers:{'X-Radar':'1'}});errOpen=false;showErrors([]);};
+  r.append(t,c);b.append(r);
+  if(errOpen)ERRS.slice().reverse().forEach(e=>b.append(el('div','eitem',new Date(e.at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+(e.n>1?' (×'+e.n+')':'')+' · '+e.msg)));
+  else b.append(el('div','eitem',last.msg));
+}
+setInterval(async()=>{try{showErrors((await (await fetch('/api/status')).json()).errors);}catch(e){}},60000);
 let poll=null;
 async function watch(){
   clearInterval(poll);
-  poll=setInterval(async()=>{const st=await (await fetch('/api/status')).json();showStatus(st);if(!st.running){clearInterval(poll);load();}},3000);
+  poll=setInterval(async()=>{const st=await (await fetch('/api/status')).json();showStatus(st);showErrors(st.errors);if(!st.running){clearInterval(poll);load();}},3000);
 }
 $('#ref').onclick=async()=>{await fetch('/api/refresh',{method:'POST',headers:{'X-Radar':'1'}});showStatus({running:true});watch();};
 $('#updbtn').onclick=async()=>{$('#updbtn').disabled=true;$('#updbtn').textContent='Güncelleniyor, birkaç saniye...';await fetch('/api/update',{method:'POST',headers:{'X-Radar':'1'}});setTimeout(()=>location.reload(),6000);};
